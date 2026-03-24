@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Micro-Coaching Simulator</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 1 — Landing  /  모드 선택 화면
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="landing-screen" class="screen active">
+    <div class="landing-wrap">
+
+      <!-- Logo -->
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 48 48" width="44" height="44" fill="none">
+            <circle cx="24" cy="24" r="22" fill="#2e9e6e" opacity=".12"/>
+            <path d="M12 34c0-6.627 5.373-12 12-12s12 5.373 12 12"
+                  stroke="#2e9e6e" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="24" cy="17" r="5" stroke="#2e9e6e" stroke-width="2.5"/>
+            <path d="M24 22v4" stroke="#2e9e6e" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>Micro-Coaching</h1>
+          <span>Nutritional Simulator</span>
+        </div>
+      </div>
+
+      <p class="tagline">
+        Choose a mode to get started.
+      </p>
+
+      <!-- Mode cards -->
+      <div class="mode-cards">
+
+        <button class="mode-card" id="pick-simulation" type="button">
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="3"
+                    stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="8.5" cy="8.5" r="1.8" fill="currentColor"/>
+              <circle cx="15.5" cy="8.5" r="1.8" fill="currentColor"/>
+              <path d="M7 14.5c1.1 1.5 2.5 2.5 5 2.5s3.9-1 5-2.5"
+                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="mode-card-body">
+            <strong>Simulating Chat</strong>
+            <span>Watch AI Coach question an AI User about their meal. Full autopilot.</span>
+          </div>
+          <div class="mode-card-arrow">›</div>
+        </button>
+
+        <button class="mode-card" id="pick-custom" type="button">
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="mode-card-body">
+            <strong>Custom Chat</strong>
+            <span>Chat directly with the AI Coach about your own meal and goal.</span>
+          </div>
+          <div class="mode-card-arrow">›</div>
+        </button>
+
+      </div><!-- /mode-cards -->
+    </div>
+  </div><!-- /landing-screen -->
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 2a — Simulation Config  /  시뮬레이션 설정 화면
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="config-sim-screen" class="screen">
+    <div class="config-wrap">
+
+      <!-- Top bar: back + title -->
+      <div class="config-topbar">
+        <button class="back-btn" id="back-from-sim-config" type="button" title="Back">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor"
+                  d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <span class="config-title">
+          <span class="mode-pill sim">Simulating Chat</span>
+        </span>
+      </div>
+
+      <p class="config-desc">
+        Describe the simulated user's meal. The AI Coach will question the AI User.
+      </p>
+
+      <form id="sim-config-form" novalidate>
+
+        <!-- Goal -->
+        <div class="field-group">
+          <label for="sim-goal">Nutritional Goal</label>
+          <div class="select-wrap">
+            <select id="sim-goal" required>
+              <option value="" disabled selected>Loading goals…</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+
+        <!-- Meal type -->
+        <div class="field-group">
+          <label for="sim-meal-type">Meal Type</label>
+          <div class="select-wrap">
+            <select id="sim-meal-type">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner" selected>Dinner</option>
+              <option value="a snack">Snack</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+
+        <!-- Meal description -->
+        <div class="field-group">
+          <label for="sim-meal-desc">
+            What will the user eat?
+            <span class="field-hint">List all food items</span>
+          </label>
+          <input type="text" id="sim-meal-desc"
+                 placeholder="e.g. Grilled chicken, brown rice, salad"
+                 autocomplete="off" required />
+        </div>
+
+        <!-- Ingredients -->
+        <div class="field-group">
+          <label for="sim-meal-ingr">
+            Ingredients &amp; Preparation
+            <span class="field-hint">Optional</span>
+          </label>
+          <textarea id="sim-meal-ingr" rows="3"
+                    placeholder="e.g. Chicken breast (grilled), mixed greens, olive oil dressing"></textarea>
+        </div>
+
+        <!-- Judge AI toggle -->
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Judge AI</span>
+            <span class="toggle-hint">Shows goal alignment after each AI User turn</span>
+          </div>
+          <label class="toggle-switch" id="sim-judge-label">
+            <input type="checkbox" id="sim-judge-toggle" checked />
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+
+        <div class="form-error" id="sim-form-error" hidden></div>
+
+        <button type="submit" class="btn-start" id="sim-start-btn">
+          <span class="btn-label">Start Simulation</span>
+          <span class="btn-loading" hidden><span class="dot-pulse"></span></span>
+        </button>
+
+      </form>
+    </div>
+  </div><!-- /config-sim-screen -->
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 2b — Custom Chat Config  /  커스텀 채팅 설정 화면
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="config-custom-screen" class="screen">
+    <div class="config-wrap">
+
+      <!-- Top bar: back + title -->
+      <div class="config-topbar">
+        <button class="back-btn" id="back-from-custom-config" type="button" title="Back">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor"
+                  d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <span class="config-title">
+          <span class="mode-pill custom">Custom Chat</span>
+        </span>
+      </div>
+
+      <p class="config-desc">
+        Choose your nutritional goal. The AI Coach will ask about your meal.
+      </p>
+
+      <form id="custom-config-form" novalidate>
+
+        <!-- Goal -->
+        <div class="field-group">
+          <label for="custom-goal">Nutritional Goal</label>
+          <div class="select-wrap">
+            <select id="custom-goal" required>
+              <option value="" disabled selected>Loading goals…</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+
+        <!-- Meal type -->
+        <div class="field-group">
+          <label for="custom-meal-type">Meal Type</label>
+          <div class="select-wrap">
+            <select id="custom-meal-type">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner" selected>Dinner</option>
+              <option value="a snack">Snack</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+
+        <!-- Judge AI toggle -->
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Judge AI</span>
+            <span class="toggle-hint">Shows goal alignment after each of your replies</span>
+          </div>
+          <label class="toggle-switch" id="custom-judge-label">
+            <input type="checkbox" id="custom-judge-toggle" />
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+
+        <div class="form-error" id="custom-form-error" hidden></div>
+
+        <button type="submit" class="btn-start" id="custom-start-btn">
+          <span class="btn-label">Start Chat</span>
+          <span class="btn-loading" hidden><span class="dot-pulse"></span></span>
+        </button>
+
+      </form>
+    </div>
+  </div><!-- /config-custom-screen -->
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 3 — Chat  /  대화 화면
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="chat-screen" class="screen">
+
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="header-left">
+        <button id="chat-back-btn" class="icon-btn" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor"
+                  d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <div class="header-meta">
+          <div class="header-row1">
+            <span class="header-mode-pill" id="header-mode-pill">—</span>
+            <span class="header-goal" id="header-goal">—</span>
+          </div>
+          <span class="header-meal" id="header-meal">—</span>
+        </div>
+      </div>
+      <!-- Judge status badge (header right) -->
+        <div class="judge-badge judge-off" id="judge-badge">
+          <span class="judge-dot" id="judge-dot"></span>
+          <span id="judge-badge-text">Judge AI Off</span>
+      </div>
+    </header>
+
+    <!-- Message area -->
+    <div class="messages" id="messages" role="log" aria-live="polite"></div>
+
+    <!-- Custom mode: user input area -->
+    <div class="input-area" id="input-area" hidden>
+      <textarea id="user-input" placeholder="Type your reply…" rows="1"
+                autocomplete="off" aria-label="Your reply"></textarea>
+      <button id="send-btn" class="btn-send" disabled aria-label="Send">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Simulation mode: status bar -->
+    <div class="sim-status-bar" id="sim-status-bar" hidden>
+      <span class="sim-status-dot"></span>
+      <span id="sim-status-text">Simulation running…</span>
+    </div>
+
+  </div><!-- /chat-screen -->
+
+
+  <!-- Confirm back modal -->
+  <div id="confirm-modal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <p>Go back to the previous page? The current session will be ended.</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-ghost">Cancel</button>
+        <button id="modal-confirm" class="btn-danger">End &amp; Go Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
