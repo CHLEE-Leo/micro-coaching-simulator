@@ -10,6 +10,8 @@ Two operating modes are available from the landing screen:
 
 Both modes support an optional **Judge AI** overlay that evaluates each user reply for goal-alignment and displays a per-message chip (`✓ Goal Aligned` / `✗ Not Aligned`).
 
+For the batch simulation pipeline, see **[code/README(eng).md](../code/README(eng).md)**.
+
 ---
 
 ## Quick Start
@@ -43,6 +45,7 @@ The UI will show a banner while the model initialises and auto-dismiss it when r
 code_interactive/
 ├── app.py                 FastAPI application & HTTP endpoints
 ├── session_manager.py     Per-session state, LLM orchestration, Judge logic
+├── config_interactive.py  Reads conversation-control params from code/config.py
 ├── models/
 │   ├── coach.py           AI Coach model wrapper
 │   ├── judge.py           Judge AI (goal-alignment evaluator)
@@ -67,6 +70,12 @@ code_interactive/
 | `POST` | `/api/session/{id}/turn` | Submit one user reply (custom mode) |
 | `POST` | `/api/session/{id}/sim-step` | Advance one simulation step (sim mode) |
 | `DELETE` | `/api/session/{id}` | Terminate and clean up a session |
+
+### `GET /api/status` — response (when ready)
+
+```json
+{ "ready": true, "coach_label": "gemma-3-12b-it", "user_label": "gemma-3-12b-it" }
+```
 
 ### `POST /api/session/start` — request body
 
@@ -110,7 +119,7 @@ The UI renders this as a coloured chip beneath the user/AI-User bubble.
 
 ### Incremental Summarisation
 
-`summarize_conversation()` now accepts an optional `prev_summary` argument.
+`summarize_conversation()` accepts an optional `prev_summary` argument.
 When called for a rolling update, it receives the previous summary plus only
 the **new turns since the last summary** (`history.to_plain_text_from(last_summarized_start)`).
 This produces a richer, cumulative summary instead of re-summarising the full history each time.
@@ -128,7 +137,7 @@ If the token-only reply leaves `user_reply_clean` empty, a safe default sentence
 
 ### Dead-End Topic Injection
 
-When AI User replies with a non-answer to a specific question, the Coach's next system prompt receives a `[Topics the user already said they are NOT SURE about]` block listing every such question. This tells the Coach to move on instead of re-asking the same topic.
+When the AI User replies with a non-answer to a specific question, the Coach's next system prompt receives a `[Topics the user already said they are NOT SURE about]` block listing every such question. This tells the Coach to move on instead of re-asking the same topic.
 
 ### Stall Detection & Graceful Exit
 
@@ -170,11 +179,6 @@ Coach and AI User bubble labels display the model repo short-name (e.g. `gemma-3
 rather than generic "Coach" / "AI User". These are fetched from `/api/status` on page load.
 In **Custom Chat** mode the user bubble has no label.
 
-`/api/status` response (when ready):
-```json
-{ "ready": true, "coach_label": "gemma-3-12b-it", "user_label": "gemma-3-12b-it" }
-```
-
 ### UI — Judge AI Badge
 
 The badge in the chat header is always visible and reflects the current setting:
@@ -184,3 +188,15 @@ The badge in the chat header is always visible and reflects the current setting:
 | **On** | Green (primary) | Blinking |
 | **Off** | Red (muted) | Static |
 
+---
+
+## Citation
+
+```bibtex
+@misc{micro-coaching-simulator-2026,
+  author = {},
+  title  = {},
+  year   = {2026},
+  url    = {}
+}
+```

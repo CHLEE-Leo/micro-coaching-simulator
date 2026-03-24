@@ -1,6 +1,6 @@
-# Micro-Coaching Simulator
+# Micro-Coaching Simulator — Batch Simulation
 
-> Code repository for **"[Paper Title]"** (under review).
+> **"[Paper Title]"** (under review)
 
 A **vLLM-based multi-turn dialogue simulation framework** for generating synthetic nutritional micro-coaching conversations. Provides two operation modes:
 
@@ -8,6 +8,8 @@ A **vLLM-based multi-turn dialogue simulation framework** for generating synthet
 |---|---|---|
 | **Batch simulation** | Automated simulation over a crowdsourced meal dataset (Coach LLM + User LLM + Judge LLM) | `code/run_simulation.py` |
 | **Interactive coaching** | Real user chats with a Coach LLM via a web UI; Judge evaluates alignment in real time | `code_interactive/app.py` |
+
+For the interactive web UI, see **[code_interactive/README(eng).md](../code_interactive/README(eng).md)**.
 
 ---
 
@@ -84,7 +86,7 @@ goal                  = "lean_protein"   # lean_protein | half_fruits_vegetables
 coach_llm_repo        = "google/gemma-3-12b-it"
 user_llm_repo         = "google/gemma-3-12b-it"
 judge_llm_repo        = "google/gemma-3-12b-it"
-max_turns             = 10   # ⚠️  웹 UI 서버도 이 값을 읽습니다
+max_turns             = 10   # ⚠️  also read by the web UI server
 judge_min_turn        = 3
 batch_mode            = True
 num_gpus              = 2

@@ -1,0 +1,30 @@
+OUTPUT FORMAT:
+Respond with valid JSON containing EXACTLY one key:
+{{"answer": "<score>"}}
+
+REQUIREMENT (CRITICAL - PARSING SAFETY):
+- Output MUST be a single-line JSON object.
+- The ONLY allowed key is "answer".
+- "answer" MUST be an integer string in the closed range [0, 100].
+- Do NOT output any text before or after JSON.
+- Do NOT output markdown, code fences, comments, explanations, or extra keys.
+- Do NOT use null, NaN, N/A, unknown, booleans, arrays, or objects.
+- Do NOT use decimals for this format.
+
+SCORING RULE:
+- "100" = strongly aligned
+- "0" = strongly not aligned
+- 1~99 = partial alignment
+- Avoid exactly "50" when uncertain; choose the closer side (e.g., 49 or 51).
+
+VALID EXAMPLES:
+{{"answer": "0"}}
+{{"answer": "27"}}
+{{"answer": "83"}}
+{{"answer": "100"}}
+
+INVALID EXAMPLES:
+{{"answer": 83}}
+{{"answer": "83.5"}}
+{{"answer": "101"}}
+{{"answer": "N/A"}}

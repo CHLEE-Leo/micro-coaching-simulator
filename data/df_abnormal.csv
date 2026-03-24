@@ -1,0 +1,130 @@
+goal_id,user_id,meal_id,expert_result,user_result,kind,title,title_y,ingredients,ingredients_y,llm_classification,llm_reason,preferred_locale,expert_explanation,carbs,protein,fat,fiber,calories,carbs_explain,protein_explain,fat_explain,fiber_explain,calories_explain,short_name
+91,1665,3353,not_really,yes,lunch,sunday dinner,Sunday dinner,tomato salad chicken cutlet,Tomatoes salad chiken cutlets,abnormal,descriptive_text,en,"The goal has not been met, because there is no water in the meal. To meet this goal add water to your meal. ",3.0,39.0,15.0,4.0,339.0,,,,,,drink_water
+91,1665,3062,not_really,not_really,after_dinner_snack,new way cutting everything,1/2 is my new way cutting everything in 1/2,sweet potato pie slice,Sweet potatoe pie 1/2 slice,abnormal,descriptive_text,en,I don't see water in the meal.,26.0,2.0,8.0,1.0,205.0,"The flour in the pie crust, and the sweet potato have carbohydrates.",There is a small amoutn of protein in nuts.,"There is healthy fat in nuts, there is probably butter or margarine in the pie. Pie crust usually has butter which is a fat.","Fiber is found in skins, there is a small amount in the sweet potato.","It may be more, i took 1/2 of the piece listed here.",drink_water
+91,1665,3019,yes,yes,lunch,easy light busy warm day,Easy and light on busy warm day,bowl chicken vegetable soup grape small clementine peach greek yogurt water,"Bowl of chicken vegetale soup 1/2
+10grapes 1 small Clementine
+1 peach Greek yogurt. 8 oz water",abnormal,descriptive_text,en,There is water in the meal.,26.0,25.0,9.0,3.0,301.0,All the foods listed except water contain carbohydrates. ,The chicken and the yogurt have protein.,"The chicken has some fat, there is also fat in the yogurt.",The clementines is the main fiber source. Grape skins also have fiber.,This is based on low-fat yogurt.,drink_water
+91,1665,3076,yes,yes,breakfast,lite breakfast,Lite breakfast,water coffee hokani greek yogurt,Water coffee and a chobani Greek yogurt,abnormal,descriptive_text,en,Tap water is fine ,8.0,9.0,50.0,0.0,70.0,Based on a  non-fat yogurt,All animal products have protein.,Based on a non-fat yogurt,There is no fiber in yogurt,"If there is milk and sugar in the coffee, it would be higher.",drink_water
+91,1665,3201,yes,yes,breakfast,must last meal breakfast,"Must be my last meal?
+Breakfast for 5?",boiled egg waffle sugar free syrup strawberry butter ham,"2 boiled eggs
+3 waffles ...sugar free syrup
+Strawberries butter and ham 
+..",abnormal,descriptive_text,en,"The goal has been met, great job!",35.0,32.0,30.0,5.0,645.0,,,,,,drink_water
+91,1665,3213,yes,yes,breakfast,go sat morn,Up and on the go sat morn,pkgs cream wheat one flavored plain coffee water,2 pkgs of cream of wheat one flavored 1 plain coffee 1 water,abnormal,descriptive_text,en,This goal is met because there is water with the meal.,51.0,7.0,0.0,2.0,253.0,na,na,na,na,na,drink_water
+91,1665,3333,yes,yes,breakfast,carb breakfast made someone else,A carb breakfast made by someone else,coffee water slice whole wheat test margarine marmalade,Coffee water and 3 slices of whole wheat tst with margarine and marmalade,abnormal,descriptive_text,en,This goal is met because water is included in the meal.,65.0,12.0,14.0,9.0,435.0,na,na,na,na,na,drink_water
+91,1665,3045,yes,yes,breakfast,long travel day eat right feel right,Long travel day eat right. Feel right,coffee water instant sugar free oatmeal water,Coffee. Water 2 instant sugar free oatmeal and water....,abnormal,descriptive_text,en,Tap water is also considered water.,38.0,6.0,4.0,6.0,200.0,1/2 cup oatmeal is 1 carbohydrate serving.,Oatmeal has a small amount of protein.,Oatmeal has a small amount of healthy fat.,Oatmeal is a good source of fiber.,It would be higher if the coffee has sugar and cream.,drink_water
+91,1665,3064,yes,yes,breakfast,breakfast champ,Breakfast for champs,lentil water coffee,Lentils. Water coffee,abnormal,descriptive_text,en,Water can be tap or bottled.,76.0,32.0,2.0,20.0,364.0,"Lentils are a starch (carbohydrate), the serving size on the diabetic  is 1/2 cup. They are also a protein serving.",Lentils are a vegetable protein source,Lentils have a small amount of fat.,Lentils are an excellent source of fiber.,"Based on 1 cup of lentils, it would be higher if there i cream and sugar in the coffee.",drink_water
+91,1665,3397,yes,yes,dinner,meal day goal setting meal,2nd meal of day a goal setting meal,chicken celery olive red pepper onion,Chicken celery olives red pepper onion 🍅,abnormal,descriptive_text,en,This goal is met because there is water with this meal.,20.0,19.0,12.0,4.0,264.0,na,na,na,na,na,drink_water
+91,1665,3470,yes,yes,dinner,late night dinner cut half,Late night dinner cut in half,shrimp salad wrap wow wrap lettuce tomato avocado,"Shrimp salad wrap on w.w wrap
+Lettuce tomato avacado",abnormal,descriptive_text,en,WAter can be tap water too.,25.0,15.0,24.0,4.0,361.0,na,na,na,na,na,drink_water
+91,1665,3092,yes,yes,breakfast,health start week,Off to a Health start of the week,weight control oatmeal orange water coffee,Weight control oatmeal Orange water and coffee,abnormal,descriptive_text,en,This goal is met because water is included in the meal.,56.0,11.0,4.0,11.0,282.0,,,,,Weight control oatmeal: http://www.quakeroats.com/products/hot-cereals/weight-control/maple-and-brown-sugar.aspx Orange: http://www.calorieking.com/foods/calories-in-fresh-fruits-oranges-average-all-varieties-raw_f-ZmlkPTYzNzE5.html,drink_water
+247,2256,3775,not_really,not_really,dinner,test,Test,chicken rice bean red bean avocado,Chicken rice beans red beans avocado,abnormal,test_data,en,test,0.0,0.0,0.0,0.0,0.0,test,test,test,test,test,drink_water
+428,2475,5017,not_really,yes,breakfast,breakfast,Breakfast,apple toast cheese,Apple toast cheese,abnormal,descriptive_text,en,,39.0,7.0,7.0,4.0,235.0,,,,,,drink_water
+428,2475,5023,not_really,yes,breakfast,yum,Yum!,laverne large strawberry,80z lucerne and 5 large strawberries,abnormal,meaningless_text,en,,28.0,15.0,8.0,9.0,232.0,nutrition facts from glucernastore.com,,,,,drink_water
+428,2475,5034,not_really,yes,breakfast,breakfast,Breakfast,strawberry glucerna,1 cup strawberries 8 oz glucerna.,abnormal,descriptive_text,en,,37.0,11.0,7.0,8.0,248.0,,,,,,drink_water
+428,2475,5037,not_really,yes,lunch,leftover,Leftovers,brussel sprout steak strawberry,Brussel sprouts and steak. Strwaberries,abnormal,descriptive_text,en,,22.0,31.0,14.0,7.0,317.0,,,,,,drink_water
+428,2475,5043,not_really,yes,breakfast,hi,Hi BS???,glucerna strawberry,Glucerna and 1 cup strawberries,abnormal,meaningless_text,en,,19.0,7.0,5.0,3.0,141.0,,,,,Nutrition info retrieved from: https://glucerna.com/nutrition-products/glucerna-snack-shakes-rich-chocolate,drink_water
+428,2475,5106,not_really,yes,lunch,sugar hi go lite,Sugar hi so go lite,almond unsweetened applesauce,Almonds and unsweetened applesauce,abnormal,descriptive_text,en,,22.0,9.0,23.0,7.0,321.0,,,,,,drink_water
+428,2475,5136,not_really,yes,breakfast,dependable option,Dependable option!,carb steady oz,Carb steady 8oz,abnormal,descriptive_text,en,,1.0,7.0,0.0,0.0,140.0,,,,,,drink_water
+428,2475,5011,yes,yes,breakfast,yum,Yum,small green apple andglucerna pluswater,Small green apple and 8oz glucerna plus 8oz water,abnormal,meaningless_text,en,The goal has been met. Great job!,42.0,11.0,6.0,6.0,258.0,,,,,,drink_water
+428,2475,5013,yes,yes,lunch,brunch friend,Brunch with friend,oz coffeemaker egg canadian bacon whole wheat tomcat,8oz coffee 8oz water. 1 egg. Canadian bacon. Whole wheat. Tomoat,abnormal,descriptive_text,en,,43.0,25.0,9.0,7.0,356.0,,,,,,drink_water
+428,2475,5068,yes,yes,dinner,many carbs,Too many carbs!!!,fried chicken white rice water green apple,Fried chicken and white rice. 12 oz water. Green apple.,abnormal,descriptive_text,en,,89.0,17.0,10.0,5.0,527.0,,,,,,drink_water
+428,2475,5181,yes,yes,breakfast,go meal,Go to meal,glucerna oz water oz,"Glucerna 8oz, water 12oz",abnormal,descriptive_text,en,,16.0,15.0,8.0,5.0,180.0,,,,,,drink_water
+428,2475,5238,yes,yes,breakfast,breast,Brkfst,glucerna water,Glucerna and 12 oz water,abnormal,descriptive_text,en,,27.0,10.0,7.0,3.0,208.0,,,,,,drink_water
+428,2475,5280,yes,yes,breakfast,usual,The ususal,glucerna water,Glucerna and 12 oz water,abnormal,descriptive_text,en,,16.0,15.0,8.0,5.0,180.0,,,,,,drink_water
+428,2475,5362,yes,yes,breakfast,usual,Usual,glucerna leastwater,Glucerna and at least 12oz water,abnormal,descriptive_text,en,,16.0,10.0,9.0,4.0,180.0,Nutrition facts from https://glucerna.com/nutrition-products/glucerna-shakes-rich-chocolate,,,,,drink_water
+455,2535,5302,not_really,yes,morning_snack,test,test,cherry % milk cup teaspoon sugar,"cherrios, 2% milk - 1 cup, 1teaspoon sugar.",abnormal,test_data,en,,61.0,33.0,71.0,29.0,576.0,,,,,,drink_water
+455,2535,5461,not_really,yes,dinner,test,Test,baked potato butter mashed potato steak,"Baked potato with butter 
+Mashed potato 
+Steak",abnormal,test_data,en,,19.0,15.0,22.0,0.0,371.0,,,,,,drink_water
+571,2721,6309,yes,yes,dinner,dinner,Dinner,chicken roasted sweet potato salad,Chicken roasted sweet potato salad,abnormal,descriptive_text,en,,21.0,25.0,24.0,1.0,413.0,,,,,,drink_water
+4,49,472,yes,yes,afternoon_snack,go,On the Go,turkey cheese jalapeno slice sandwich banana king henry fruit & nut containing raisin almond cranberry apricot peanut pineapple papaya walnut cashew banana chip coconut oil sugar natural flavoring,"Turkey, Cheese, and Jalapeno slices (Sandwich). A Banana. King Henry's Fruit & Nuts containing raisins, almonds, cranberry, apricot, peanuts, pineapple, papaya, walnuts, cashews, banana chips (coconut oil, sugar, natural flavoring)",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+18,1821,2212,not_really,not_really,breakfast,test,Test,test,Test,abnormal,test_data,en,test,,,,,,,,,,,lean_protein
+18,3083,7438,not_really,yes,lunch,lunch,Lunch,mince meat cabbage,Mince meat cabbage,abnormal,descriptive_text,en,,8.0,9.0,15.0,4.0,225.0,,,,,This is based on 2 ounces of minced meat,lean_protein
+18,1883,3390,not_really,not_really,afternoon_snack,diet healthy drink,Diet healthy drink,diabetes supplement,Diabetes supplement.,abnormal,descriptive_text,en,"This goal is not met because there are no lean proteins in the meal, such as chicken, pork chop, fish or plant proteins. To meet this goal, add some lean protein as listed in the Choose Your Foods book.",16.0,10.0,9.0,3.0,179.0,na,na,na,na,na,lean_protein
+18,3083,7578,not_really,yes,dinner,dinner,Dinner,egg roll bean sprout noodle meat,Egg roll bean sprouts noodles meat,abnormal,descriptive_text,en,,63.0,20.0,18.0,3.0,501.0,,,,,This is based on a pork eggroll. There is sauce next to the eggroll that I didn't add in.,lean_protein
+18,3083,7582,not_really,yes,lunch,lunch,Lunch,dumpling cucumber,Dumpling cucumber,abnormal,descriptive_text,en,,64.0,17.0,20.0,5.0,514.0,,,,,This is based on fried pork wontons and 1/2 cup of rice.,lean_protein
+18,2948,6664,not_really,yes,breakfast,improvised fast,Improvised bfast,cheddar cheese cup mixed veg tbsp peanut butter,"4 oz cheddar cheese
+1.5 cups mixed veg
+2 tbspn peanut butter",abnormal,descriptive_text,en,"Peanut butter and cheese are the proteins and they are high fat proteins. To meet the goal choose low fat cheese and have smaller servings of peanut butter. Although peanut butter has the health type of fat, it is still a fat. ",8.0,34.0,53.0,2.0,649.0,,,,,,lean_protein
+18,3083,7622,not_really,yes,breakfast,breakfast,Breakfast,yogurt cracker cheese,Yugort crackers cheese,abnormal,descriptive_text,en,,42.0,14.0,11.0,1.0,311.0,,,,,"I didn't see the cheese so I based this on 1 ounce of cheese.  The yogurt looks like fruit on the bottom. If is not that type, then it is less calories and fat.",lean_protein
+18,3083,7494,not_really,yes,dinner,dinner,Dinner,rice salad meat,Rice salad meat,abnormal,descriptive_text,en,,57.0,23.0,33.0,2.0,643.0,,,,,,lean_protein
+18,3083,7515,not_really,yes,breakfast,breakfast,Breakfast,bun sausage,Bun sausage,abnormal,descriptive_text,en,,42.0,13.0,11.0,1.0,323.0,,,,,,lean_protein
+18,3083,7663,not_really,yes,lunch,lunch,Lunch,pastrami sand fry manhattan clam chowder,Pastrami sand few fries manhattan clam chowder,abnormal,descriptive_text,en,Pastrami is a high-fat protein,83.0,42.0,21.0,8.0,732.0,,,,,,lean_protein
+18,3083,7616,not_really,yes,dinner,dinner,Dinner,rice egg spare rib fish,Rice egg spare ribs fish,abnormal,descriptive_text,en,,57.0,35.0,27.0,1.0,636.0,,,,,"This is based on 1 egg, 1/2 cup of rice, fish not fried.",lean_protein
+18,3083,7378,not_really,yes,lunch,lunch,Lunch,romainlettuce string bean soup noodle baloney,Romainlettuce string beans soup noodle baloney,abnormal,descriptive_text,en,,52.0,12.0,7.0,6.0,312.0,,,,,,lean_protein
+18,1883,2447,not_really,not_really,morning_snack,test,Test,water,Water,abnormal,test_data,en,,,,,,,,,,,,lean_protein
+18,3083,7688,not_really,yes,dinner,dinner,Dinner,rice tomato beef spare ribsturnips,Rice tomato beef spare ribsturnips,abnormal,descriptive_text,en,The goal isn't met because spareribs are a high-fat protein.,31.0,22.0,24.0,4.0,461.0,,,,,,lean_protein
+18,1883,2562,not_really,yes,lunch,lunch plate,Lunch plate,red rice bean chicken,"Red rice,beans,chicken",abnormal,descriptive_text,en,"While chicken can be a lean protein, fried chicken is high in fat. The fat comes mostly from the chicken skin and the oil used for frying. To meet this goal, choose a baked or grilled chicken and remove the skin before eating. ",,,,,,,,,,,lean_protein
+18,1883,2579,not_really,yes,afternoon_snack,fluid,Fluid,water,Water,abnormal,descriptive_text,en,"It is very important to drink water for overall health and proper hydration. However, water does not contain protein. ",,,,,,,,,,,lean_protein
+9,1821,2212,not_really,not_really,breakfast,test,Test,test,Test,abnormal,test_data,en,test,,,,,,,,,,,half_fruits_vegetables
+9,2658,6831,not_really,not_really,lunch,test,Test,evaluate,Do not evaluate,abnormal,test_data,en,The goal is not met. ,0.0,0.0,0.0,0.0,0.0,,,,,,half_fruits_vegetables
+9,2524,7055,not_really,not_really,breakfast,test,Test,test,Test,abnormal,test_data,en,The goal is not met,0.0,0.0,0.0,0.0,0.0,,,,,,half_fruits_vegetables
+9,2524,7043,not_really,not_really,lunch,test,Just test,test,Test,abnormal,test_data,en,The goal is not met,0.0,0.0,0.0,0.0,0.0,,,,,,half_fruits_vegetables
+9,2524,7034,not_really,yes,dinner,se de test,"No se de
+
+
+Test",test,Test,abnormal,test_data,en,The goal is not met,0.0,0.0,0.0,0.0,0.0,,,,,,half_fruits_vegetables
+9,1957,2474,not_really,not_really,breakfast,test,Test,medium roast two sugar cream,Medium roast two sugar cream,abnormal,test_data,en,"The goal has not been met, because there are no fruits or vegetables. To meet this goal add fruits and vegetables to your meal.",,,,,,,,,,,half_fruits_vegetables
+9,1216,1568,not_really,not_really,breakfast,tty,Tty,,Again,abnormal,meaningless_text,en,test,,,,,,,,,,,half_fruits_vegetables
+9,1883,2554,not_really,not_really,dinner,protein,Protein,pork chop white rice roman bean curd onion green pepper,"Pork chop, white rice,Roman bean curd,onion,green pepper",abnormal,descriptive_text,en,"To meet this goal, reduce the portion of pork chops and bean curd and add another serving of vegetables (such and 1/2 cup of broccoli or 1 cup of salad).",,,,,,,,,,,half_fruits_vegetables
+9,1646,1965,not_really,not_really,after_dinner_snack,test_water,Test_water,test_water,Test_water,abnormal,test_data,en,,,,,,,,,,,,half_fruits_vegetables
+9,1646,1979,not_really,not_really,morning_snack,test_bubbletea,Test_bubbletea,black tea milk tapioca pearl ice,"Black tea, milk, tapioca pearl, ice",abnormal,test_data,en,,,,,,,,,,,,half_fruits_vegetables
+9,1646,2046,not_really,not_really,lunch,sjsjjsjwj,Sjsjjsjwj,znjzkskkzkz,Znjzkskkzkz,abnormal,meaningless_text,en,test,,,,,,,,,,,half_fruits_vegetables
+9,2524,5253,not_really,not_really,breakfast,test,Test,latte,Latte,abnormal,test_data,en,,0.0,0.0,0.0,0.0,0.0,,,,,,half_fruits_vegetables
+9,1819,2770,not_really,not_really,afternoon_snack,test tea,Test: tea,tea,Tea,abnormal,test_data,en,test,,,,,,,,,,,half_fruits_vegetables
+9,2822,6027,not_really,not_really,lunch,leftover,Leftovers,fish pasta,Fish and pasta,abnormal,descriptive_text,en,"Good job including onions and peppers. In order to meet this goal, make 1/2 your plate fruit or vegetables.",86.0,31.0,9.0,6.0,529.0,,,,,,half_fruits_vegetables
+9,3146,8404,not_really,yes,breakfast,good morning god bless corn flake milk,Good morning and God bless you I am corn flakes with milk,call flake milk,Call flakes with milk,abnormal,descriptive_text,en,,31.0,6.0,2.0,1.0,174.0,,,,,,half_fruits_vegetables
+9,3146,8404,not_really,yes,breakfast,good morning god bless corn flake milk,Good morning and God bless you I am corn flakes with milk,call flake milk,Call flakes with milk,abnormal,descriptive_text,en,,31.0,6.0,2.0,1.0,174.0,,,,,,half_fruits_vegetables
+9,3146,8685,yes,yes,dinner,coddle vegetable,I will coddle and vegetables,coddle vegetable,I will coddle and vegetables,abnormal,descriptive_text,en,,43.0,4.0,1.0,4.0,195.0,,,,,,half_fruits_vegetables
+9,3146,8578,yes,yes,dinner,soup water cabbage cabbage onion cilantro little bit season,Soup water cabbage cabbage onions and cilantro and a little bit of season,soup water cilantro onion red pepper little bit price habit cabbage,Soup water cilantro onions red peppers a little bit Orice habits and cabbage,abnormal,descriptive_text,en,,14.0,2.0,0.0,4.0,64.0,,,,,,half_fruits_vegetables
+9,3146,8128,yes,yes,dinner,soup water,This soup and water,soup cabinet vegetable cilantro onion garlic red pepper,Soup cabinets H vegetables Cilantro onion garlic red pepper,abnormal,descriptive_text,en,,28.0,4.0,1.0,8.0,132.0,,,,,,half_fruits_vegetables
+9,1819,2131,yes,not_really,afternoon_snack,test date,Test Dates,date,Dates,abnormal,test_data,en,test,,,,,,,,,,,half_fruits_vegetables
+9,1821,2144,yes,yes,lunch,test,Test,salmon corn yam baked potato,Salmon corn yam baked potatoe,abnormal,test_data,en,,,,,,,,,,,,half_fruits_vegetables
+9,1821,2153,yes,yes,lunch,test,Test,test,Test,abnormal,test_data,en,The potato and brussel sprouts are half of the plate. They are both vegetables.,,,,,,,,,,,half_fruits_vegetables
+4,48,422,not_really,not_really,morning_snack,morning snack,Morning snack,muffin bagel cream cheese jelly orange apple,Muffin bagel with cream cheese jelly orange and a apple,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,49,498,not_really,yes,dinner,,27-Jul,beef macaroni & cheese,Beef and Macaroni & Cheese,abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,64,824,not_really,yes,lunch,southern food,Southern food,fried chicken thigh wheat pasta macaroni cheese mashed potato biscuit cob corn,"Fried chicken thigh, wheat pasta macaroni and cheese, mashed potato, biscuit, cob corn",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,18,241,not_really,not_really,breakfast,earphone,Earphone,earphone,Earphone,abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,49,482,not_really,not_really,after_dinner_snack,,7/25 ; 1:45am,ruffle cheddar sour cream chip cheetos crunchy flaming hot & pepsi soda,"Ruffles cheddar and sour cream chips, Cheetos crunchy flamin' hot & Pepsi Soda",abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,19,203,not_really,not_really,afternoon_snack,bar,Bar,bar,Bar,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,18,974,not_really,not_really,lunch,shoe,Shoes,shoe,Shoes,abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,34,222,not_really,not_really,dinner,salad dinner,"Salad...dinner, again",arugula red onion radish lemon oil,"Arugula, red onion, radishes lemon and oil",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,90,1030,not_really,yes,afternoon_snack,test,Test,test,Test,abnormal,test_data,en,,,,,,,,,,,,lean_protein
+4,47,518,not_really,not_really,dinner,sick people food,Sick people food,green tea peach flavored oatmeal,Green tea and peach flavored oatmeal,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,46,410,not_really,not_really,breakfast,drink,Drink,banana blueberry,Banana And blueberries,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,18,242,not_really,not_really,morning_snack,test,Test,hadda,Hhddh,abnormal,test_data,en,,,,,,,,,,,,lean_protein
+4,49,552,not_really,yes,breakfast,sunny side,The sunny side,egg bacon & bread,Eggs bacon & bread,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,49,567,not_really,yes,dinner,workshop white rice salad,"Porkchops, white rice, salad",workshop white rice lettuce corn,Porkchops white rice lettuce and corn,abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,49,478,yes,yes,afternoon_snack,,,wheat bread american cheese salsalito turkey mayonnaise,"Wheat Bread, American Cheese, salsalito turkey with mayonnaise //",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,49,480,yes,yes,dinner,,7.24,chicken mole sauce white rice,Chicken in Mole sauce with white rice,abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,48,429,yes,yes,lunch,spanish food,Spanish food,chicken rice bean,Chicken rice and beans,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,49,511,yes,yes,dinner,,30-Jul,chicken white rice broccoli carrot cauliflower,"Chicken, white rice, Broccoli, carrots and Cauliflower",abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,49,513,yes,not_really,dinner,,31-Jul,rice mashed potato chicken,"Rice, Mashed potatoes and chicken",abnormal,invalid_title,en,,,,,,,,,,,,lean_protein
+4,64,956,yes,yes,lunch,school lunch,School lunch,baked chicken rice black bean carrot broccoli cauliflower,"Bakee chicken, rice, black beans, carrots, broccoli, cauliflower",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,34,221,yes,yes,dinner,dinner continued,...Dinner Continued,duck soft blue corn tortilla orange sauce pinot noir,Duck in soft blue corn tortilla in some orange sauce and Pinot Noir,abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+4,47,448,yes,not_really,lunch,buffet food,Buffet food,chicken pasta cheese salad mashed potato corn grit,"Chicken, pasta, cheese, salad, madhed potatoes,  corn, grits",abnormal,descriptive_text,en,,,,,,,,,,,,lean_protein
+8,1821,2212,not_really,not_really,breakfast,test,Test,test,Test,abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,1869,2249,not_really,yes,lunch,,a,,a,abnormal,meaningless_text,en,n/a test,,,,,,,,,,,one_fourth_carbs
+8,1869,2251,not_really,yes,afternoon_snack,,B,,B,abnormal,meaningless_text,en,this meal is 100% carbs,,,,,,,,,,,one_fourth_carbs
+8,1869,2252,not_really,yes,afternoon_snack,,A,,A,abnormal,meaningless_text,en,this meal is 100% carbs,,,,,,,,,,,one_fourth_carbs
+8,1869,2253,not_really,yes,afternoon_snack,x,X,x,X,abnormal,meaningless_text,en,this meal is 100% carbs,,,,,,,,,,,one_fourth_carbs
+8,1869,2242,not_really,yes,lunch,,a,,a,abnormal,meaningless_text,en,Test,,,,,,,,,,,one_fourth_carbs
+8,1869,2243,not_really,yes,morning_snack,,a,,a,abnormal,meaningless_text,en,Test,,,,,,,,,,,one_fourth_carbs
+8,1883,2447,not_really,not_really,morning_snack,test,Test,water,Water,abnormal,test_data,en,,,,,,,,,,,,one_fourth_carbs
+8,1957,2474,not_really,not_really,breakfast,test,Test,medium roast two sugar cream,Medium roast two sugar cream,abnormal,test_data,en,"The goal has not been met, because there are no carbs in your meal.",,,,,,,,,,,one_fourth_carbs
+8,1883,2473,not_really,yes,lunch,lunch plate,Lunch plate,fish brown rice string_bean onion lemon candle,"Fish,brown rice,stringbeans,onion,lemon,gandules.",abnormal,descriptive_text,en,"The goal has not been met, because the rice and guandules take more of 1/4 plate. To meet this goal, try to make rice and guandules 1/4 of your plate",,,,,,,,,,,one_fourth_carbs
+8,1883,2554,not_really,yes,dinner,protein,Protein,pork chop white rice roman bean curd onion green pepper,"Pork chop, white rice,Roman bean curd,onion,green pepper",abnormal,descriptive_text,en,"The main carbs are the beans and rice. I am unable to tell from the photo how much beans and rice is present, but it appears to be closer to half the plate. To meet this goal, reduce the portion of beans and rice so that is makes up 1/4 of the plate. ",,,,,,,,,,,one_fourth_carbs
+8,1654,1969,not_really,yes,breakfast,test,Test,test,Test,abnormal,test_data,en,,,,,,,,,,,,one_fourth_carbs
+8,1654,1994,not_really,not_really,morning_snack,test,Test,test,Test,abnormal,test_data,en,,,,,,,,,,,,one_fourth_carbs
+8,1638,2034,not_really,not_really,breakfast,test oatmeal jam,Test: Oatmeal with jam,oatmeal milk jam,"Oatmeal, milk, jam",abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,1638,2035,not_really,not_really,breakfast,test oatmeal jam,Test: Oatmeal with jam,oatmeal milk jam,"Oatmeal, milk, jam",abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,1819,2770,not_really,not_really,afternoon_snack,test tea,Test: tea,tea,Tea,abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,1821,2821,not_really,not_really,lunch,test,Test.,test,Test.,abnormal,test_data,en,,50.0,50.0,50.0,50.0,1000.0,,,,,,one_fourth_carbs
+8,1821,2153,not_really,yes,lunch,test,Test,test,Test,abnormal,test_data,en,The plate is abou  half carbs.,,,,,,,,,,,one_fourth_carbs
+8,1884,2300,yes,yes,dinner,test,Test,corn potato,"Corn ,Potato,",abnormal,test_data,en,,,,,,,,,,,,one_fourth_carbs
+8,1883,2478,yes,yes,dinner,diet food,Diet food,hummus red roasted pepper mini cut carrot water,"Hummus red roasted pepper,mini cut carrots ,water.",abnormal,descriptive_text,en,The goal has ben met. Great job!,,,,,,,,,,,one_fourth_carbs
+8,1638,1988,yes,not_really,breakfast,test tea,Test: tea,tea,Tea,abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,1654,1993,yes,yes,morning_snack,test,Test,test,Test,abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs
+8,3083,7314,yes,yes,lunch,lunch,Lunch,bread cheese slice ham one baloney avocado,Bread cheese to slice ham one baloney avacado,abnormal,descriptive_text,en,,34.0,16.0,22.0,8.0,391.0,,,,,,one_fourth_carbs
+8,1819,2131,yes,not_really,afternoon_snack,test date,Test Dates,date,Dates,abnormal,test_data,en,test,,,,,,,,,,,one_fourth_carbs

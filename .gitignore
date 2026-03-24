@@ -1,6 +1,7 @@
-data/
+# data/
 results/
-README(eng).md
+# README(eng).md
+README.md
 __pycache__
 _create_simulated_dialogs.py
 _functions_for_general.py

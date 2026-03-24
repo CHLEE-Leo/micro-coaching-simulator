@@ -1,0 +1,19 @@
+{
+    "one_fourth_carbs": {
+        "definition": "Make 1/4 of my meal carbs.",
+        "standard": "1/4 of the meal is starchy CHO foods (not including dairy, fruits, or vegetables)"
+    },
+    "half_fruits_vegetables": {
+        "definition": "Make 1/2 my meal fruits and/or vegetables.",
+        "standard": "the meal contains at least 1/2 cup of fruit and 1 cup of non-starchy vegetables"
+    },
+    "lean_protein": {
+        "definition": "Choose food sources that are high in protein but low in fat.",
+        "standard": "the main protein must be lean.",
+        "example": "a turkey sandwich with a slice or 2 of bacon vs a BLT"
+    },
+    "drink_water": {
+        "definition": "Drink water with my meal.",
+        "standard": "water is shown with the meal or the user writes water in the description."
+    }
+}

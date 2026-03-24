@@ -1,0 +1,151 @@
+{
+  "categories": [
+    {
+      "name": "Carbs",
+      "goals": [
+        {
+          "id": "carbs_quantity_one_fourth_meal",
+          "type": "quantity",
+          "goal": "Make ¼ of my meal carbs",
+          "standards": [
+            "¼ of the meal is starchy, carbohydrate foods. This does not include dairy, fruits, or vegetables."
+          ]
+        },
+        {
+          "id": "carbs_quality_whole_grains",
+          "type": "quality",
+          "goal": "Choose whole grains",
+          "standards": [
+            "½ of the grains in the meal will be whole grains."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FV",
+      "goals": [
+        {
+          "id": "fv_quantity_half_meal",
+          "type": "quantity",
+          "goal": "Make ½ of my meal fruits and/or vegetables",
+          "standards": [
+            "The meal contains at least ½ cup of fruit and 1 cup of non-starchy vegetables."
+          ]
+        },
+        {
+          "id": "fv_quality_whole_fruits",
+          "type": "quality",
+          "goal": "Choose whole fruits",
+          "standards": [
+            "At least 1 serving of whole fruits is present on the plate.",
+            "It is acceptable if the meal also contains juice."
+          ]
+        },
+        {
+          "id": "fv_quality_variety",
+          "type": "quality",
+          "goal": "Choose a variety of fruits and vegetables",
+          "standards": [
+            "At least 2 different types of fruit or vegetable are present with the meal.",
+            "No fried potatoes are included.",
+            "Baked, roasted, or boiled potatoes are acceptable."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Protein",
+      "goals": [
+        {
+          "id": "protein_quantity_one_fourth_meal",
+          "type": "quantity",
+          "goal": "Make ¼ of my meal protein",
+          "standards": [
+            "¼ of the plate is protein."
+          ]
+        },
+        {
+          "id": "protein_quality_lean",
+          "type": "quality",
+          "goal": "Choose lean proteins",
+          "standards": [
+            "The main protein of the meal must be lean. For example, a turkey sandwich with a slice or two of bacon versus a BLT."
+          ]
+        },
+        {
+          "id": "protein_quality_plant",
+          "type": "quality",
+          "goal": "Choose plant proteins",
+          "standards": [
+            "At least 1 serving of plant protein is present in the meal."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Solid fats & added sugars",
+      "goals": [
+        {
+          "id": "fats_quality_low_fat_meals",
+          "type": "quality",
+          "goal": "Choose low fat meals",
+          "standards": [
+            "No fried foods.",
+            "No high fat dairy.",
+            "No high fat meats.",
+            "No more than 1 tablespoon of butter, 2 tablespoons of salad dressing, or 1 tablespoon of mayonnaise."
+          ]
+        },
+        {
+          "id": "fats_quality_vegetable_fats",
+          "type": "quality",
+          "goal": "Choose vegetable fats and oils over solid fats",
+          "standards": [
+            "No more than 1 tablespoon of solid fats, such as butter or lard, is used in the meal."
+          ]
+        },
+        {
+          "id": "sugars_quality_no_added_sugar",
+          "type": "quality",
+          "goal": "Choose a meal without added sugar",
+          "standards": [
+            "The meal will not include foods that are known to contain added sugar.",
+            "These foods include pastries, cookies, candies, cakes, and regular sodas.",
+            "100% fruit juice is acceptable."
+          ]
+        },
+        {
+          "id": "drinks_quality_drink_water_with_meal",
+          "type": "quality",
+          "goal": "Drink water with my meal",
+          "standards": [
+            "Water is shown with the meal or the user writes water in the description of the meal."
+          ]
+        },
+        {
+          "id": "drinks_quality_water_instead_of_sugary_beverages",
+          "type": "quality",
+          "goal": "Drink water instead of sugary beverages",
+          "standards": [
+            "No sugary beverages are shown with the meal or described in the description of the meal."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Portion Sizes",
+      "goals": [
+        {
+          "id": "portion_quantity_reduce_portion_size",
+          "type": "quantity",
+          "goal": "Reduce the portion size of my meal",
+          "standards": [
+            "Carbohydrates take up ¼ of the plate.",
+            "Protein takes up ¼ of the plate.",
+            "Vegetables and fruit make up ½ of the plate."
+          ]
+        }
+      ]
+    }
+  ]
+}
