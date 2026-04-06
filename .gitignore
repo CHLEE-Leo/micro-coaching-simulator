@@ -1,9 +1,16 @@
-# data/
+data/
 results/
-# README(eng).md
-README.md
+README(eng).md
+# README.md
 __pycache__
+.env
 _create_simulated_dialogs.py
 _functions_for_general.py
 _functions_for_simulation_baseline.py
 _functions_for_simulation.py
+AGENT.md
+*.bak
+
+.vscode/
+.venv/
+.github/

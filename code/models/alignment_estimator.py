@@ -1,10 +1,10 @@
 """
-models/judge.py
+models/alignment_estimator.py
 ───────────────
-LLM 기반 Judge 모델.
+LLM 기반 Alignment Estimator 모델.
 
 역할
-  - 매 턴마다 Coach ↔ User 대화에서 드러난 식사 정보를 누적하여
+  - 매 턴마다 InformationSeeker ↔ User 대화에서 드러난 식사 정보를 누적하여
     해당 식사가 지정된 영양 목표(nutritional goal)를 달성하는지 실시간 판정합니다.
   - 판정 결과가 "aligned"(answer == "1")이면 시뮬레이션이 clean termination 됩니다.
 
@@ -16,20 +16,31 @@ LLM 기반 Judge 모델.
   - 모든 정적 리소스(goal_def, expert_workflow, output_format_inst)는
     __init__ 시점에 한 번만 로드합니다.
 
-데이터 파일 (nutritional-coaching-agent/data/additional/)
+데이터 파일 (data/additional/)
   - goal_def.json              : 목표별 정의 및 달성 기준
   - expert_workflow.json       : 정성/정량 평가 워크플로우
   - output_format_inst_binary.txt : JSON binary 출력 형식 지시문
 
 통합 방식 (simulation.py)
-  - simulate_conversations_batch() 내부에서 User 배치 이후 Judge 배치가 실행됩니다.
-  - judge 배치 결과가 aligned 이면 ctx["terminated"] = True, terminated_by = "judge".
+  - simulate_conversations_batch() 내부에서 User 배치 이후 AlignmentEstimator 배치가 실행됩니다.
+  - alignment 배치 결과가 aligned 이면 ctx["terminated"] = True, terminated_by = "alignment".
   - _build_result() 에 alignment 및 alignment_history 필드가 추가됩니다.
 
-최소 판정 시작 턴 (config.judge_min_turn)
+최소 판정 시작 턴 (config.alignment_min_turn)
   - 충분한 식사 정보가 드러나기 전에 조기 종료되지 않도록
-    config.judge_min_turn 이전 턴에서는 판정을 건너뜁니다.
-  - 기본값 1: 0번째 턴(Coach 고정 발화만 있는 턴)은 스킵하고 1번째 턴부터 판정합니다.
+    config.alignment_min_turn 이전 턴에서는 판정을 건너뜁니다.
+  - 기본값 3: 턴 0~2는 스킵하고 턴 3부터 판정합니다.
+
+커스터마이징
+  - _build_alignment_system_prompt() : 판정 기준과 프롬프트 구조.
+                                   다른 평가 관점을 적용하려면 이 함수를 수정하세요.
+  - goal_def.json               : 목표별 정의. 새 영양 목표를 추가하거나
+                                   기존 정의를 변경하려면 이 파일을 수정하세요.
+  - expert_workflow.json         : 전문가 워크플로우 (정성/정량 단계).
+                                   평가 절차를 바꾸려면 이 파일을 수정하세요.
+  - output_format_inst_*.txt     : 출력 포맷 지시문 (binary | 0-1 | 0-100).
+  - alignment_use_goal_def / alignment_use_workflow (config.py)
+                                 : 프롬프트 scaffold 블록 포함 여부 스위치.
 """
 
 from __future__ import annotations
@@ -64,7 +75,7 @@ _OUTPUT_FMT_CACHE:  Dict[str, str]       = {}  # format 스트링 키별 캐시
 def _load_goal_definitions() -> Dict:
     global _GOAL_DEF_CACHE
     if _GOAL_DEF_CACHE is None:
-        path = _DATA_DIR / "goal_def.json"
+        path = _DATA_DIR / "goal_def_v2.json"
         with open(path, "r", encoding="utf-8") as f:
             _GOAL_DEF_CACHE = json.load(f)
     return _GOAL_DEF_CACHE
@@ -127,7 +138,7 @@ def _get_goal_spec(nutrition_goal: str) -> Dict:
 # 시스템 프롬프트 빌더
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _build_judge_system_prompt(
+def _build_alignment_system_prompt(
     nutrition_goal:  str,
     goal_definition: str,   # 빈 문자열이면 블록 전체 생략
     workflow_text:   str,   # 빈 문자열이면 블록 전체 생략
@@ -144,14 +155,14 @@ def _build_judge_system_prompt(
     task_inputs = ["- nutrition_goal"]
     if goal_definition:
         task_inputs.append(f"- goal_definition: {goal_definition}")
-    task_inputs += ["- context (meal conversation so far)", "- question"]
+    task_inputs += ["- context (meal description)", "- question"]
 
     # ── DECISION PROTOCOL goal_definition 언급 ────────────────────────────
     goal_def_note = " (and goal_definition if available)" if goal_definition else ""
 
     # ── 조건부 섹션 ────────────────────────────────────────────────────────
     workflow_block = (
-        f"\nWORKFLOW OF EXPERT NUTRITIONIST:\n{workflow_text}"
+        f"\n\nWORKFLOW OF EXPERT NUTRITIONIST:\n{workflow_text}"
         if workflow_text else ""
     )
 
@@ -166,27 +177,31 @@ def _build_judge_system_prompt(
         + "\n4. Make one final alignment judgment."
         + "\n\nOUTPUT POLICY:"
         + "\n- Follow output_format_instruction exactly."
-        + "\n- Return only the final answer in the required format."
-        + "\n- Do not add extra keys, markdown, explanation, or surrounding text."
+        + "\n- Return the answer and a brief reasoning in the required JSON format."
+        + "\n- Do not add extra keys, markdown, or surrounding text."
         + "\n- If uncertain, still return a valid value in the allowed range/format."
         + "\n- For continuous scales, avoid boundary values (0.5 or 50) unless strictly necessary."
+        + "\n\nREASONING ABOUT SCORE CHANGES:"
+        + "\n- If a previous alignment score is provided, your reasoning MUST explain why the current score differs from (or remains the same as) the previous score."
+        + "\n- Describe what new information from the latest conversation turn caused the score to increase, decrease, or stay the same."
+        + "\n- If no previous score is provided (first evaluation), base your reasoning solely on the current evidence."
         + workflow_block
         + f"\n\n{output_format_inst}"
     )
 
-_JUDGE_USER_TEMPLATE = """\
+_ALIGNMENT_USER_TEMPLATE = """\
 [context]
 {transcript}
-
+{prev_score_context}
 [question]
-Does the meal described in this conversation align with the '{nutrition_goal}' goal?"""
+Does this meal align with the goal of {nutrition_goal_display}?"""
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# JudgeModel
+# AlignmentEstimator
 # ──────────────────────────────────────────────────────────────────────────────
 
-class JudgeModel:
+class AlignmentEstimator:
     """
     LLM 기반 영양 목표 달성 여부 실시간 판정 모델.
 
@@ -211,17 +226,17 @@ class JudgeModel:
         goal_spec = _get_goal_spec(nutrition_goal)
 
         # config 스위치에 따라 scaffold 값 자체를 빈 문자열로 대체
-        # → _build_judge_system_prompt() 가 빈 값을 받으면 해당 블록을 생략
+        # → _build_alignment_system_prompt() 가 빈 값을 받으면 해당 블록을 생략
         self._goal_definition = (
-            goal_spec.get("definition", "") if config.judge_use_goal_def else ""
+            goal_spec.get("definition", "") if config.alignment_use_goal_def else ""
         )
         self._workflow_text = (
-            _get_workflow_text(nutrition_goal) if config.judge_use_workflow else ""
+            _get_workflow_text(nutrition_goal) if config.alignment_use_workflow else ""
         )
-        self._output_fmt = _load_output_format(config.judge_output_format)
+        self._output_fmt = _load_output_format(config.alignment_output_format)
 
         # 시스템 프롬프트 사전 빌드 (매 턴 재사용)
-        self._system_prompt = _build_judge_system_prompt(
+        self._system_prompt = _build_alignment_system_prompt(
             nutrition_goal     = nutrition_goal,
             goal_definition    = self._goal_definition,
             workflow_text      = self._workflow_text,
@@ -233,6 +248,7 @@ class JudgeModel:
         self._judgment_history: List[Dict] = []
         self._last_aligned: Optional[bool]  = None
         self._last_score:   Optional[float] = None
+        self._last_reasoning: Optional[str]  = None
 
     # ── 공개 인터페이스 ────────────────────────────────────────────────────
 
@@ -253,9 +269,22 @@ class JudgeModel:
         List[Dict[str, str]] : chat-template 형식의 messages
         """
         transcript = self._build_transcript(history)
-        user_content = _JUDGE_USER_TEMPLATE.format(
-            transcript     = transcript,
-            nutrition_goal = self.nutrition_goal,
+
+        # 이전 턴 점수 컨텍스트 생성
+        if self._last_score is not None:
+            prev_score_context = (
+                f"\n[previous alignment score]\n"
+                f"The alignment score from the previous turn was {self._last_score:.2f}.\n"
+                f"In your reasoning, you MUST explain why the score changed, decreased, increased, "
+                f"or stayed the same compared to this previous score.\n"
+            )
+        else:
+            prev_score_context = ""  # 첫 턴: 이전 점수 없음
+
+        user_content = _ALIGNMENT_USER_TEMPLATE.format(
+            transcript            = transcript,
+            nutrition_goal_display = self.nutrition_goal.replace("_", " "),
+            prev_score_context    = prev_score_context,
         )
         return [
             {"role": "system", "content": self._system_prompt},
@@ -281,11 +310,11 @@ class JudgeModel:
             # 파싱 실패 → 보수적으로 not aligned
             score   = 0.0
             aligned = False
-        elif self.config.judge_output_format == "binary":
+        elif self.config.alignment_output_format == "binary":
             aligned = (score == 1.0)
         else:
             # 0-1 및 0-100(정규화 후) 모두 [0, 1] 기준 임계값 비교
-            aligned = (score >= self.config.judge_align_threshold)
+            aligned = (score >= self.config.alignment_threshold)
 
         self._last_aligned = aligned
         self._last_score   = score
@@ -293,24 +322,25 @@ class JudgeModel:
             "turn_idx"   : turn_idx,
             "aligned"    : aligned,
             "score"      : score,
+            "reasoning"  : self._last_reasoning,
             "raw_output" : raw_output.strip(),
         })
         return aligned
 
-    def should_judge(self, turn_idx: int) -> bool:
+    def should_evaluate(self, turn_idx: int) -> bool:
         """
         현재 턴에서 판정을 실행해야 하는지 여부를 반환합니다.
-        config.judge_min_turn 미만에서는 충분한 정보가 없으므로 건너뜁니다.
+        config.alignment_min_turn 미만에서는 충분한 정보가 없으므로 건너뜁니다.
 
         Parameters
         ----------
         turn_idx : 현재 완성된 최대 턴 인덱스 (0-based)
         """
-        return turn_idx >= self.config.judge_min_turn
+        return turn_idx >= self.config.alignment_min_turn
 
     # ── 단일 모드 (디버깅용) ──────────────────────────────────────────────
 
-    def judge(
+    def evaluate(
         self,
         history: "SharedConversationHistory",
         turn_idx: int,
@@ -328,7 +358,7 @@ class JudgeModel:
         -------
         bool : True → aligned
         """
-        if not self.should_judge(turn_idx):
+        if not self.should_evaluate(turn_idx):
             return False
 
         messages = self.get_messages(history)
@@ -336,7 +366,7 @@ class JudgeModel:
             self.model,
             messages,
             sampling="greedy",          # 판정은 항상 greedy
-            max_new_tokens=self.config.judge_max_new_tokens,
+            max_new_tokens=self.config.alignment_max_new_tokens,
             stop_at_newline=False,       # JSON 출력이므로 개행 중단 비활성화
         )
         return self.apply_judgment(raw, turn_idx)
@@ -352,6 +382,10 @@ class JudgeModel:
         """가장 최근 판정의 정규화된 점수 [0, 1]. 판정 전이면 None."""
         return self._last_score
     @property
+    def last_reasoning(self) -> Optional[str]:
+        """가장 최근 판정의 reasoning 텍스트. 없으면 None."""
+        return self._last_reasoning
+    @property
     def judgment_history(self) -> List[Dict]:
         """전체 판정 이력. 각 원소: {"turn_idx": int, "aligned": bool, "raw_output": str}"""
         return list(self._judgment_history)
@@ -361,18 +395,18 @@ class JudgeModel:
     @staticmethod
     def _build_transcript(history: "SharedConversationHistory") -> str:
         """
-        Judge 프롬프트의 컨텍스트 블록을 반환합니다.
+        Alignment Tracker 프롬프트의 컨텍스트 블록을 반환합니다.
 
-        history.to_judge_context() 를 사용하여
+        history.to_alignment_context() 를 사용하여
         User / Coach 와 동일하게 [summary + windowed turns] 형태로 구성합니다.
         전체 turns 를 raw 로 넘기는 대신 summary 로 오래된 맥락을 압축하고,
-        최신 턴만 원문으로 첨부하므로 Judge 입력 크기가 bounded 됩니다.
+        최신 턴만 원문으로 첨부하므로 Alignment Tracker 입력 크기가 bounded 됩니다.
         """
-        return history.to_judge_context()
+        return history.to_alignment_context()
 
     def _parse_answer(self, raw: str) -> Optional[float]:
         """
-        config.judge_output_format 에 따라 LLM 출력을 파싱하여
+        config.alignment_output_format 에 따라 LLM 출력을 파싱하여
         정규화된 점수 [0.0, 1.0] 로 반환합니다.
 
         - binary  : "1" → 1.0 / "0" → 0.0
@@ -395,16 +429,21 @@ class JudgeModel:
         try:
             data = json.loads(text)
             answer_str = str(data.get("answer", "")).strip()
+            # reasoning 추출 및 저장
+            self._last_reasoning = str(data.get("reasoning", "")).strip() or None
         except (json.JSONDecodeError, AttributeError, ValueError):
-            # fallback: 정규식으로 추움
+            # fallback: 정규식으로 추출
             m = re.search(r'"answer"\s*:\s*"([^"]+)"', raw)
             if m:
                 answer_str = m.group(1).strip()
+            # reasoning fallback
+            m_r = re.search(r'"reasoning"\s*:\s*"([^"]+)"', raw)
+            self._last_reasoning = m_r.group(1).strip() if m_r else None
 
         if not answer_str:
             return None
 
-        fmt = self.config.judge_output_format
+        fmt = self.config.alignment_output_format
         try:
             if fmt == "binary":
                 if answer_str == "1":

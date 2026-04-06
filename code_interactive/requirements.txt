@@ -9,3 +9,8 @@ pydantic>=2.0.0
 # pip install llama-cpp-python[cuda]   ← NVIDIA GPU (CUDA)
 # pip install llama-cpp-python[metal]  ← Apple Silicon GPU
 llama-cpp-python>=0.2.70
+
+# ChatGPT API (LangGraph + LangChain)
+langchain-openai>=0.3.0
+langgraph>=0.2.0
+python-dotenv>=1.0.0

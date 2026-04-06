@@ -94,6 +94,8 @@
         </span>
       </div>
 
+      <div class="wizard-steps" id="sim-wizard-steps"></div>
+
       <p class="config-desc">
         Describe the simulated user's meal. The AI Coach will question the AI User.
       </p>
@@ -146,23 +148,10 @@
                     placeholder="e.g. Chicken breast (grilled), mixed greens, olive oil dressing"></textarea>
         </div>
 
-        <!-- Judge AI toggle -->
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-label">Judge AI</span>
-            <span class="toggle-hint">Shows goal alignment after each AI User turn</span>
-          </div>
-          <label class="toggle-switch" id="sim-judge-label">
-            <input type="checkbox" id="sim-judge-toggle" checked />
-            <span class="toggle-thumb"></span>
-          </label>
-        </div>
-
         <div class="form-error" id="sim-form-error" hidden></div>
 
-        <button type="submit" class="btn-start" id="sim-start-btn">
-          <span class="btn-label">Start Simulation</span>
-          <span class="btn-loading" hidden><span class="dot-pulse"></span></span>
+        <button type="submit" class="btn-start" id="sim-next-btn">
+          <span class="btn-label">Next</span>
         </button>
 
       </form>
@@ -188,6 +177,8 @@
           <span class="mode-pill custom">Custom Chat</span>
         </span>
       </div>
+
+      <div class="wizard-steps" id="custom-wizard-steps"></div>
 
       <p class="config-desc">
         Choose your nutritional goal. The AI Coach will ask about your meal.
@@ -220,23 +211,10 @@
           </div>
         </div>
 
-        <!-- Judge AI toggle -->
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-label">Judge AI</span>
-            <span class="toggle-hint">Shows goal alignment after each of your replies</span>
-          </div>
-          <label class="toggle-switch" id="custom-judge-label">
-            <input type="checkbox" id="custom-judge-toggle" />
-            <span class="toggle-thumb"></span>
-          </label>
-        </div>
-
         <div class="form-error" id="custom-form-error" hidden></div>
 
-        <button type="submit" class="btn-start" id="custom-start-btn">
-          <span class="btn-label">Start Chat</span>
-          <span class="btn-loading" hidden><span class="dot-pulse"></span></span>
+        <button type="submit" class="btn-start" id="custom-next-btn">
+          <span class="btn-label">Next</span>
         </button>
 
       </form>
@@ -245,7 +223,287 @@
 
 
   <!-- ══════════════════════════════════════════════════════════════
-       SCREEN 3 — Chat  /  대화 화면
+       SCREEN 3a — User Model Settings (simulation mode only)
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="config-user-screen" class="screen">
+    <div class="config-split" id="config-user-split">
+      <div class="config-wrap">
+        <div class="config-topbar">
+          <button class="back-btn" id="back-from-user-config" type="button" title="Back">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+          <span class="config-title"><span class="mode-pill sim">Simulating Chat</span></span>
+        </div>
+        <div class="wizard-steps" id="user-wizard-steps"></div>
+        <p class="config-desc">Choose the LLM model for the AI User agent in the simulation.</p>
+        <div class="wizard-form-card">
+          <div class="field-group">
+            <label for="user-llm">User LLM</label>
+            <div class="select-wrap">
+              <select id="user-llm">
+                <option value="gemma" selected>Gemma-3-12B-IT</option>
+                <option value="chatgpt" disabled>GPT-5.2 (loading…)</option>
+              </select>
+              <span class="select-arrow">▾</span>
+            </div>
+          </div>
+
+          <!-- Persona: User Preferences (optional) -->
+          <details class="persona-section">
+            <summary>User Profile (optional)</summary>
+            <div class="field-group">
+              <label for="persona-prefs">
+                Food Preferences
+                <span class="field-hint">Comma-separated</span>
+              </label>
+              <input type="text" id="persona-prefs"
+                     placeholder="e.g. spicy food, Asian cuisine, no raw fish"
+                     autocomplete="off" />
+            </div>
+            <div class="field-group">
+              <label for="persona-allergy">
+                Allergies
+                <span class="field-hint">Comma-separated</span>
+              </label>
+              <input type="text" id="persona-allergy"
+                     placeholder="e.g. peanut, shellfish"
+                     autocomplete="off" />
+            </div>
+            <div class="field-group">
+              <label for="persona-restrict">
+                Dietary Restrictions
+                <span class="field-hint">Comma-separated</span>
+              </label>
+              <input type="text" id="persona-restrict"
+                     placeholder="e.g. vegetarian, halal"
+                     autocomplete="off" />
+            </div>
+          </details>
+
+          <button type="button" class="btn-start" id="user-next-btn"><span class="btn-label">Next</span></button>
+        </div>
+      </div>
+      <!-- User prompt preview panel (right side) -->
+      <div class="alignment-options-panel" id="wizard-user-preview-panel">
+        <div class="alignment-options-header">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <span>User Prompt Preview</span>
+        </div>
+        <div class="alignment-prompt-preview">
+          <div class="alignment-prompt-preview-header">
+            <span class="alignment-prompt-preview-title">Instruction Preview</span>
+            <span class="alignment-prompt-preview-badge">Live</span>
+          </div>
+          <pre class="alignment-prompt-preview-content" id="wizard-user-prompt-preview">Loading…</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 3b — Coach Model Settings (both modes)
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="config-coach-screen" class="screen">
+    <div class="config-split" id="config-coach-split">
+      <div class="config-wrap">
+        <div class="config-topbar">
+          <button class="back-btn" id="back-from-coach-config" type="button" title="Back">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+          <span class="config-title"><span class="mode-pill" id="coach-mode-pill">—</span></span>
+        </div>
+        <div class="wizard-steps" id="coach-wizard-steps"></div>
+        <p class="config-desc">Configure the AI Coach model and conversation style.</p>
+        <div class="wizard-form-card">
+          <div class="field-group">
+            <label for="coach-llm">Coach LLM</label>
+            <div class="select-wrap">
+              <select id="coach-llm">
+                <option value="gemma" selected>Gemma-3-12B-IT</option>
+                <option value="chatgpt" disabled>GPT-5.2 (loading…)</option>
+              </select>
+              <span class="select-arrow">▾</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Conversation Mode</label>
+            <div class="conv-mode-cards">
+              <button type="button" class="conv-mode-card active" data-mode="template-based">
+                <div class="conv-mode-icon">📋</div>
+                <div class="conv-mode-body">
+                  <strong>Template-based</strong>
+                  <span>Coach follows structured question strategies (Action Guidelines)</span>
+                </div>
+              </button>
+              <button type="button" class="conv-mode-card" data-mode="open-ended">
+                <div class="conv-mode-icon">💬</div>
+                <div class="conv-mode-body">
+                  <strong>Open-ended</strong>
+                  <span>Coach freely generates questions without predefined strategies</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <!-- Dialogue Summarization toggle -->
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Dialogue Summarization</span>
+              <span class="toggle-hint">Periodically summarize dialogue flow for Coach/User context</span>
+            </div>
+            <label class="toggle-switch" id="dialog-summ-toggle-label">
+              <input type="checkbox" id="dialog-summ-toggle" checked />
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
+
+          <!-- Uncertainty Tracking toggle -->
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Uncertainty Tracking</span>
+              <span class="toggle-hint">Coach estimates meal-goal alignment certainty each turn; ends conversation when certainty ≥ 0.85</span>
+            </div>
+            <label class="toggle-switch" id="uncertainty-toggle-label">
+              <input type="checkbox" id="uncertainty-toggle" />
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
+
+          <button type="button" class="btn-start" id="coach-next-btn"><span class="btn-label">Next</span></button>
+        </div>
+      </div>
+      <!-- Coach prompt preview panel (right side) -->
+      <div class="alignment-options-panel" id="wizard-coach-preview-panel">
+        <div class="alignment-options-header">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+                  stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <span>Coach Prompt Preview</span>
+        </div>
+        <div class="alignment-prompt-preview">
+          <div class="alignment-prompt-preview-header">
+            <span class="alignment-prompt-preview-title">Instruction Preview</span>
+            <span class="alignment-prompt-preview-badge">Live</span>
+          </div>
+          <pre class="alignment-prompt-preview-content" id="wizard-coach-prompt-preview">Loading…</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 3c — Alignment Tracker Model Settings (both modes, split layout)
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="config-alignment-screen" class="screen">
+    <div class="config-split" id="config-alignment-split">
+      <div class="config-wrap">
+        <div class="config-topbar">
+          <button class="back-btn" id="back-from-alignment-config" type="button" title="Back">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+          <span class="config-title"><span class="mode-pill" id="alignment-mode-pill">—</span></span>
+        </div>
+        <div class="wizard-steps" id="alignment-wizard-steps"></div>
+        <p class="config-desc">Configure the Alignment Tracker evaluation settings.</p>
+        <div class="wizard-form-card">
+          <!-- Alignment Tracker toggle -->
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Alignment Tracker</span>
+              <span class="toggle-hint">Evaluate goal alignment after each turn</span>
+            </div>
+            <label class="toggle-switch" id="wizard-alignment-label">
+              <input type="checkbox" id="wizard-alignment-toggle" />
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
+          <!-- Options shown when alignment tracker is enabled -->
+          <div id="wizard-alignment-body" hidden>
+            <div class="field-group">
+              <label for="wizard-alignment-llm">Alignment Tracker LLM</label>
+              <div class="select-wrap">
+                <select id="wizard-alignment-llm">
+                  <option value="gemma" selected>Gemma-3-12B-IT</option>
+                  <option value="chatgpt" disabled>GPT-5.2 (loading…)</option>
+                </select>
+                <span class="select-arrow">▾</span>
+              </div>
+            </div>
+            <div class="toggle-row toggle-row-sm">
+              <div class="toggle-info">
+                <span class="toggle-label">Goal Definition</span>
+                <span class="toggle-hint">Include goal definition in Alignment Tracker prompt</span>
+              </div>
+              <label class="toggle-switch toggle-sm">
+                <input type="checkbox" id="wizard-alignment-goaldef" checked />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="toggle-row toggle-row-sm">
+              <div class="toggle-info">
+                <span class="toggle-label">Expert Workflow</span>
+                <span class="toggle-hint">Use expert nutritionist workflow</span>
+              </div>
+              <label class="toggle-switch toggle-sm">
+                <input type="checkbox" id="wizard-alignment-workflow" checked />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="field-group">
+              <label for="wizard-alignment-format">Output Format</label>
+              <div class="select-wrap">
+                <select id="wizard-alignment-format">
+                  <option value="binary" selected>Binary (0/1)</option>
+                  <option value="0-1">Continuous (0–1)</option>
+                  <option value="0-100">Continuous (0–100)</option>
+                </select>
+                <span class="select-arrow">▾</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-error" id="wizard-form-error" hidden></div>
+          <button type="button" class="btn-start" id="wizard-start-btn">
+            <span class="btn-label">Start Session</span>
+            <span class="btn-loading" hidden><span class="dot-pulse"></span></span>
+          </button>
+        </div>
+      </div>
+      <!-- Alignment Tracker prompt preview panel (right side) -->
+      <div class="alignment-options-panel" id="wizard-alignment-preview-panel" hidden>
+        <div class="alignment-options-header">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"
+                  stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Alignment Tracker Prompt Preview</span>
+        </div>
+        <div class="alignment-prompt-preview">
+          <div class="alignment-prompt-preview-header">
+            <span class="alignment-prompt-preview-title">Instruction Preview</span>
+            <span class="alignment-prompt-preview-badge">Live</span>
+          </div>
+          <pre class="alignment-prompt-preview-content" id="wizard-alignment-prompt-preview">Loading…</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCREEN 4 — Chat  /  대화 화면
   ══════════════════════════════════════════════════════════════ -->
   <div id="chat-screen" class="screen">
 
@@ -266,32 +524,91 @@
           <span class="header-meal" id="header-meal">—</span>
         </div>
       </div>
-      <!-- Judge status badge (header right) -->
-        <div class="judge-badge judge-off" id="judge-badge">
-          <span class="judge-dot" id="judge-dot"></span>
-          <span id="judge-badge-text">Judge AI Off</span>
+      <!-- Monitoring status badge (header right) -->
+        <div class="alignment-badge alignment-off" id="monitor-badge">
+          <span class="alignment-dot" id="monitor-dot"></span>
+          <span id="monitor-badge-text">Monitoring Off</span>
       </div>
     </header>
 
-    <!-- Message area -->
-    <div class="messages" id="messages" role="log" aria-live="polite"></div>
+    <!-- Split container: chat + alignment panel -->
+    <div class="chat-body" id="chat-body">
 
-    <!-- Custom mode: user input area -->
-    <div class="input-area" id="input-area" hidden>
-      <textarea id="user-input" placeholder="Type your reply…" rows="1"
-                autocomplete="off" aria-label="Your reply"></textarea>
-      <button id="send-btn" class="btn-send" disabled aria-label="Send">
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-        </svg>
-      </button>
-    </div>
+      <!-- Left panel: conversation -->
+      <div class="chat-main" id="chat-main">
+        <!-- Message area -->
+        <div class="messages" id="messages" role="log" aria-live="polite"></div>
 
-    <!-- Simulation mode: status bar -->
-    <div class="sim-status-bar" id="sim-status-bar" hidden>
-      <span class="sim-status-dot"></span>
-      <span id="sim-status-text">Simulation running…</span>
-    </div>
+        <!-- Custom mode: user input area -->
+        <div class="input-area" id="input-area" hidden>
+          <textarea id="user-input" placeholder="Type your reply…" rows="1"
+                    autocomplete="off" aria-label="Your reply"></textarea>
+          <button id="send-btn" class="btn-send" disabled aria-label="Send">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Simulation mode: status bar -->
+        <div class="sim-status-bar" id="sim-status-bar" hidden>
+          <span class="sim-status-dot" id="sim-status-dot"></span>
+          <span id="sim-status-text">Click Next Turn to proceed</span>
+          <button id="sim-next-turn-btn" class="btn-next-turn" type="button">
+            Next Turn ▶
+          </button>
+        </div>
+      </div>
+
+      <!-- Right panel: Backend Monitoring -->
+      <div class="monitor-panel" id="monitor-panel" hidden>
+        <div class="monitor-panel-header">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M3 13h2v-2H3v2zm4 0h2v-2H7v2zm4 0h2v-2h-2v2zm4 0h2v-2h-2v2zm4 0h2v-2h-2v2z"
+                  fill="currentColor"/>
+            <path d="M1 18h22v2H1v-2z" fill="currentColor"/>
+          </svg>
+          <span>Backend Monitoring</span>
+        </div>
+        <!-- Tabs -->
+        <div class="monitor-tabs">
+          <button class="monitor-tab active" data-tab="tab-meal">Meal Tracker</button>
+          <button class="monitor-tab" data-tab="tab-alignment">Alignment Tracker</button>
+          <button class="monitor-tab" data-tab="tab-certainty">Uncertainty Tracker</button>
+          <button class="monitor-tab" data-tab="tab-orchestrator">Orchestrator</button>
+        </div>
+        <!-- Tab panels -->
+        <div class="monitor-tab-content active" id="tab-meal">
+          <div class="alignment-panel-cards" id="meal-panel-cards">
+            <div class="alignment-panel-empty" id="meal-panel-empty">
+              <p>Meal Fact Sheet will appear after MealTracker processes the conversation.</p>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-tab-content" id="tab-alignment">
+          <div class="alignment-panel-cards" id="alignment-panel-cards">
+            <div class="alignment-panel-empty" id="alignment-panel-empty">
+              <p>Alignment Tracker evaluation will appear here once enough conversation turns are collected.</p>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-tab-content" id="tab-certainty">
+          <div class="alignment-panel-cards" id="certainty-panel-cards">
+            <div class="alignment-panel-empty" id="certainty-panel-empty">
+              <p>Certainty scores will appear when Uncertainty Tracking is enabled.</p>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-tab-content" id="tab-orchestrator">
+          <div class="alignment-panel-cards" id="orchestrator-panel-cards">
+            <div class="alignment-panel-empty" id="orchestrator-panel-empty">
+              <p>Orchestrator decisions and MealRecommender results will appear here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /chat-body -->
 
   </div><!-- /chat-screen -->
 

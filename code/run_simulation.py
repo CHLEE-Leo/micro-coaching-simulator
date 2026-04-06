@@ -32,18 +32,18 @@ def main() -> None:
     print(f"  data_path               : {config.data_path}")
     print(f"  coach_llm               : {config.coach_llm_repo}")
     print(f"  user_llm                : {config.user_llm_repo}")
-    print(f"  judge_llm               : {config.judge_llm_repo or '(= coach_llm)'}")
+    print(f"  alignment_llm               : {config.alignment_llm_repo or '(= coach_llm)'}")
     print(f"  num_gpus                : {config.num_gpus}")
     print(f"  max_model_len           : {config.max_model_len}")
     print(f"  dtype                   : {config.dtype}")
     print(f"  batch_mode              : {config.batch_mode}")
     print(f"  max_turns               : {config.max_turns}")
-    print(f"  judge_min_turn          : {config.judge_min_turn}")
-    print(f"  judge_sampling          : {config.judge_sampling}")
-    print(f"  judge_output_format     : {config.judge_output_format}")
-    print(f"  judge_align_threshold   : {config.judge_align_threshold}")
-    print(f"  judge_use_goal_def      : {config.judge_use_goal_def}")
-    print(f"  judge_use_workflow      : {config.judge_use_workflow}")
+    print(f"  alignment_min_turn          : {config.alignment_min_turn}")
+    print(f"  alignment_sampling          : {config.alignment_sampling}")
+    print(f"  alignment_output_format     : {config.alignment_output_format}")
+    print(f"  alignment_threshold   : {config.alignment_threshold}")
+    print(f"  alignment_use_goal_def      : {config.alignment_use_goal_def}")
+    print(f"  alignment_use_workflow      : {config.alignment_use_workflow}")
     print(f"  sampling (coach/user)   : {config.sampling}")
     print(f"  summarize_max_new_tokens: {config.summarize_max_new_tokens}")
     print(f"  seed                    : {config.seed}")
@@ -73,14 +73,14 @@ def main() -> None:
             dtype=config.dtype,
         )
 
-    _judge_repo = config.judge_llm_repo or config.coach_llm_repo
-    if _judge_repo == config.coach_llm_repo:
-        print("[*] Judge LLM = Coach LLM (공유)")
-        judge_llm = None   # simulate_conversations_batch 에서 coach_llm 으로 대체
+    _alignment_repo = config.alignment_llm_repo or config.coach_llm_repo
+    if _alignment_repo == config.coach_llm_repo:
+        print("[*] Alignment Tracker LLM = Coach LLM (공유)")
+        alignment_llm = None   # simulate_conversations_batch 에서 coach_llm 으로 대체
     else:
-        print(f"[*] Judge LLM 로딩: {_judge_repo}")
-        judge_llm = load_model(
-            _judge_repo,
+        print(f"[*] Alignment Tracker LLM 로딩: {_alignment_repo}")
+        alignment_llm = load_model(
+            _alignment_repo,
             tensor_parallel_size=config.num_gpus,
             max_model_len=config.max_model_len,
             dtype=config.dtype,
@@ -122,7 +122,7 @@ def main() -> None:
             coach_llm=coach_llm,
             user_llm=user_llm,
             config=config,
-            judge_llm=judge_llm,
+            alignment_llm=alignment_llm,
             already_done=already_done,
             on_dialog_end=_on_dialog_end,
         )
@@ -157,6 +157,7 @@ def main() -> None:
                 coach_llm=coach_llm,
                 user_llm=user_llm,
                 config=config,
+                alignment_llm=alignment_llm,
                 expert_result=str(row["expert_result"]),
                 meal_ingredient=str(row.get("meal_ingredient", "") or ""),
             )

@@ -6,7 +6,7 @@ Interactive 모드 전용 LLM 유틸리티.
 vLLM 대신 llama-cpp-python 을 사용합니다.
 
 이 파일이 /code/utils/llm_utils.py 보다 sys.path 우선순위가 높으므로
-CoachModel / JudgeModel 이 `from utils.llm_utils import generate_response` 를
+InformationSeeker / AlignmentEstimator 이 `from utils.llm_utils import generate_response` 를
 실행할 때 이 파일의 함수를 가져갑니다.  /code 는 변경 없음.
 
 / Identical function signatures to /code/utils/llm_utils.py but powered by
@@ -198,69 +198,3 @@ def batch_generate(
         responses.append(result)
 
     return responses
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 5. 대화 요약 생성
-# ─────────────────────────────────────────────────────────────────────────────
-
-_SUMMARIZE_SYSTEM = (
-    "You are a thorough conversation summarizer. "
-    "Summarize ALL meal details discussed so far in 3-5 sentences. "
-    "Cover every food item, preparation method, ingredient, and portion that was mentioned. "
-    "Be factual and complete — do not omit any detail."
-)
-
-_SUMMARIZE_SYSTEM_INCREMENTAL = (
-    "You are an incremental conversation summarizer. "
-    "You will be given a previous summary and new conversation turns that occurred after it. "
-    "Produce an updated summary that incorporates both. "
-    "Cover every food item, preparation method, ingredient, and portion mentioned across all turns. "
-    "Be factual, complete, and use 3-5 sentences."
-)
-
-
-def summarize_conversation(
-    llm: Llama,
-    conversation_text: str,
-    prev_summary: str = "",
-    max_new_tokens: int = 180,
-) -> str:
-    """
-    대화 텍스트를 3-5 문장으로 요약합니다.
-    prev_summary 가 있으면 기존 요약 + 신규 턴을 합쳐 증분 업데이트합니다.
-    / Summarises the conversation in 3-5 sentences.
-      When prev_summary is provided, incrementally updates from the previous summary.
-    """
-    if prev_summary and conversation_text:
-        messages = [
-            {"role": "system", "content": _SUMMARIZE_SYSTEM_INCREMENTAL},
-            {
-                "role": "user",
-                "content": (
-                    f"Previous summary:\n{prev_summary}\n\n"
-                    f"New conversation turns since the previous summary:\n\n"
-                    f"{conversation_text}\n\n"
-                    "Now write the updated summary incorporating all information:"
-                ),
-            },
-        ]
-    else:
-        messages = [
-            {"role": "system", "content": _SUMMARIZE_SYSTEM},
-            {
-                "role": "user",
-                "content": (
-                    "Conversation to summarize:\n\n"
-                    f"{conversation_text}\n\n"
-                    "Now write a thorough summary of all meal details discussed:"
-                ),
-            },
-        ]
-    return generate_response(
-        llm,
-        messages,
-        sampling="greedy",
-        max_new_tokens=max_new_tokens,
-        stop_at_newline=False,   # 요약은 여러 문장 허용
-    )

@@ -1,10 +1,57 @@
 """
 core/simulation.py
 ──────────────────
-Coach ↔ User 대화 시뮬레이션 오케스트레이터.
+배치 시뮬레이션 오케스트레이터.
 
-두 가지 실행 모드를 제공합니다:
+배치 모드에서는 Orchestrator 없이 간소화된 흐름을 사용합니다:
+InformationSeeker가 직접 질문 생성, AlignmentEstimator가 종료 판단.
+(full Orchestrator-centric 흐름은 code_interactive/ 에서 구현)
 
+에이전트 상호작용 플로우 (배치 — 매 턴)
+─────────────────────────────────────
+
+    ┌──────────────────┐  질문   ┌──────────┐
+    │ InformationSeeker│ ─────→ │   User   │
+    └────────┬─────────┘        └────┬─────┘
+             │                       │ 응답 (partial info)
+             │              ┌────────┴─────────────┐
+             │              │                      │
+             │     ┌────────────────┐  ┌──────────────────┐
+             │     │  MealTracker   │  │ DialogSummarizer │
+             │     │ → Fact Sheet   │  │ → 대화흐름 요약   │
+             │     └───────┬────────┘  └────────┬─────────┘
+             │             │                    │
+             │             ▼                    ▼
+             │   ┌──────────────────────────────────┐
+             │   │    Shared Conversation History   │
+             │   └──────────────┬───────────────────┘
+             │                  │ meal_fact_sheet
+             │                  ▼
+             │         ┌─────────────────┐
+             │         │AlignmentEstimator│ ← aligned 판정 시 종료
+             │         └─────────────────┘
+             │
+        IS 질문 반복 (max_turns까지)
+
+  ※ 인터랙티브 모드(code_interactive/)에서는 Orchestrator가 중앙 허브 역할을 하며,
+    Guardrail, MealRecommender, UncertaintyEstimator, Memorizer도 함께 사용됩니다.
+
+  Turn 0 :
+    InformationSeeker → 고정 초기 질문 ("What are you having for {meal_type}?")
+    User               → 음식 전체 공개 (meal_description)
+
+  Turn t (≥ 1) :
+    InformationSeeker  → 질문 생성 (LLM)
+    User               → 상세 정보 점진 공개 (LLM, partial information)
+    MealTracker        → 식사 정보를 Meal Fact Sheet 로 구조화 추출 (매 N턴)
+    DialogSummarizer   → 대화 흐름을 서술형으로 요약 (매 N턴)
+    AlignmentEstimator → Meal Fact Sheet + 최근 대화 원문으로 영양 목표 달성 판정
+
+  종료 조건 :
+    - AlignmentEstimator 가 aligned 판정 → terminated_by = "alignment"
+    - max_turns 초과                       → terminated_by = "max_turns"
+
+두 가지 실행 모드
   [단일 모드]  simulate_conversation()
     한 건의 식사 샘플에 대해 순차적으로 대화를 진행합니다.
     디버깅·소규모 실험에 적합합니다.
@@ -14,21 +61,21 @@ Coach ↔ User 대화 시뮬레이션 오케스트레이터.
     vLLM 의 batch_generate() 로 한 번에 처리합니다.
     GPU 가동률을 극대화하여 처리량(throughput)이 크게 향상됩니다.
 
-흐름 (두 모드 공통)
-  turn 0  : Coach 고정 발화 → User LLM 응답 → 요약 스케줄 확인
-  turn t>0: Coach LLM 질문 → User LLM 응답 → Judge 판정 → 요약 스케줄 확인
-  종료    : Judge 가 aligned 판정 내림 또는 max_turns 초과
-
 책임 분리
-  - 메모리 관리  : core/memory.py  (SharedConversationHistory, ConversationBuffer)
-  - 발화 생성    : models/coach.py, models/user.py
-  - LLM 추론     : utils/llm_utils.py  (generate_response, batch_generate)
-  - 설정         : config.py
+  - 메모리 관리   : core/memory.py      (SharedConversationHistory, ConversationBuffer)
+  - 질문 생성     : models/information_seeker.py
+  - AI 사용자     : models/user.py
+  - 목표 판정     : models/alignment_estimator.py
+  - 식사 정보 추출: models/meal_tracker.py       (→ Meal Fact Sheet → AlignmentEstimator 입력)
+  - 대화 흐름 요약: models/dialog_summarizer.py  (→ InformationSeeker/User 시스템 프롬프트)
+  - LLM 추론      : utils/llm_utils.py  (generate_response, batch_generate)
+  - 설정          : config.py
 """
 
 from __future__ import annotations
 
 import random
+import re as _re
 from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
@@ -39,10 +86,26 @@ from tqdm import tqdm
 
 from config import SimulationConfig
 from core.memory import SharedConversationHistory
-from models.coach  import CoachModel
-from models.judge  import JudgeModel
+from models.information_seeker  import InformationSeeker, _is_duplicate_question as _is_duplicate
+from models.alignment_estimator import AlignmentEstimator
 from models.user   import UserModel
-from utils.llm_utils import batch_generate, summarize_conversation
+from models.meal_tracker       import MealTrackerModel
+from models.dialog_summarizer  import DialogSummarizerModel
+from utils.llm_utils import batch_generate
+
+# Non-answer 패턴: User가 정보를 제공하지 못한 발화
+_NON_ANSWER_RE = _re.compile(
+    r"(i'?m not sure|i haven'?t decided|not sure|just a standard"
+    r"|i don'?t know|don'?t know|haven'?t decided|standard portion"
+    r"|i'?m unsure|i'?m not really sure|no idea|not decided)",
+    _re.IGNORECASE,
+)
+
+def _is_non_answer(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return True
+    return bool(_NON_ANSWER_RE.search(stripped))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -73,6 +136,7 @@ def simulate_conversation(
     coach_llm,
     user_llm,
     config:           SimulationConfig,
+    alignment_llm=None,
     expert_result:    str = "yes",
     meal_ingredient:  str = "",
 ) -> Dict[str, Any]:
@@ -90,6 +154,7 @@ def simulate_conversation(
     coach_llm         : vLLM LLM 객체 (Coach 역할)
     user_llm          : vLLM LLM 객체 (User 역할, coach_llm 과 동일 가능)
     config            : SimulationConfig 인스턴스
+    alignment_llm     : vLLM LLM 객체 (AlignmentEstimator 용, None 이면 coach_llm 공유)
     expert_result     : 전문가 레이블 ("yes" | "not_really") — 정확도 추적용
 
     Returns
@@ -98,7 +163,9 @@ def simulate_conversation(
             turns, summary, terminated_by, pred_alignment, true_alignment, alignment_correct}
     """
     # ── 에이전트 초기화 ─────────────────────────────────────────────────────
-    coach = CoachModel(
+    _alignment_llm = alignment_llm if alignment_llm is not None else coach_llm
+
+    coach = InformationSeeker(
         model=coach_llm,
         nutrition_goal=nutrition_goal,
         meal_type=meal_type,
@@ -111,11 +178,19 @@ def simulate_conversation(
         config=config,
         meal_ingredient=meal_ingredient,
     )
+    meal_tracker      = MealTrackerModel(model=coach_llm, config=config)
+    dialog_summarizer = DialogSummarizerModel(model=coach_llm, config=config)
+    alignment         = AlignmentEstimator(
+        model=_alignment_llm,
+        nutrition_goal=nutrition_goal,
+        config=config,
+    )
 
     # ── 공통 대화 기록 초기화 ───────────────────────────────────────────────
     history = SharedConversationHistory(context_window=config.context_window)
 
     terminated_by = "max_turns"
+    dead_end_topics: List[str] = []
 
     # ── 턴 루프 ─────────────────────────────────────────────────────────────
     with tqdm(total=config.max_turns, desc=f"[Dialog {dialog_id}] Turns") as pbar:
@@ -126,29 +201,59 @@ def simulate_conversation(
             if turn_idx == 0:
                 coach_utterance = coach.first_question()
             else:
-                coach_utterance = coach.ask(history)
+                _template = coach.ask(
+                    history,
+                    dead_end_topics=dead_end_topics if dead_end_topics else None,
+                )
+                coach_utterance = _template.get(
+                    "question_template",
+                    "Could you tell me more about your meal?",
+                )
 
             print(f"\n[T{turn_idx}] Coach : {coach_utterance}")
             history.add_turn(turn_idx=turn_idx, coach_utterance=coach_utterance)
 
             # ── (2) User 응답 ──────────────────────────────────────────
-            user_utterance = user.respond(history)
+            user_utterance_raw = user.respond(history)
+            # [END] 태그 감지 및 제거
+            _natural_end = SharedConversationHistory.TERMINATION_TOKEN in user_utterance_raw
+            user_utterance = user_utterance_raw.replace(
+                SharedConversationHistory.TERMINATION_TOKEN, ""
+            ).strip()
+            if not user_utterance:
+                user_utterance = "I think that covers everything about my meal."
             print(f"[T{turn_idx}] User  : {user_utterance}")
             history.update_last_user_utterance(user_utterance)
 
+            # dead-end 추적: User가 non-answer면 해당 Coach 질문 기록
+            if _is_non_answer(user_utterance):
+                dead_end_topics.append(coach_utterance)
+
             pbar.update(1)
 
-            # ── (3) 요약 갱신 스케줄  (Principle 4) ────────────────
-            # 종료 조건은 Judge 만 담당합니다 (단일 모드는 Judge 미포함, max_turns 상한만 사용).
-            completed = turn_idx + 1
-            if completed % config.summarize_every == 0:
-                _update_summary(history, coach_llm, config)
+            # 자연 종료: User가 [END] 태그를 생성한 경우
+            if _natural_end:
+                terminated_by = "natural_end"
+                break
 
-    # 루프 종료 후 최종 요약 갱신
-    _update_summary(history, coach_llm, config)
+            # ── (3) MealTracker + DialogSummarizer: 개별 스케줄 ────
+            completed = turn_idx + 1
+            if completed % config.meal_track_every == 0:
+                _update_meal_fact_sheet(history, meal_tracker)
+            if completed % config.summarize_every == 0:
+                _update_dialog_summary(history, dialog_summarizer)
+
+            # ── (4) AlignmentEstimator: 목표 달성 판정 ────────────
+            if alignment.evaluate(history, turn_idx):
+                terminated_by = "alignment"
+                break
+
+    # 루프 종료 후 최종 갱신
+    _update_summaries(history, meal_tracker, dialog_summarizer)
 
     return _build_result(dialog_id, goal_id, meal_id, nutrition_goal,
                          meal_type, meal_description, history, terminated_by,
+                         alignment_tracker=alignment,
                          expert_result=expert_result)
 
 
@@ -161,7 +266,7 @@ def simulate_conversations_batch(
     coach_llm,
     user_llm,
     config:       SimulationConfig,
-    judge_llm     = None,
+    alignment_llm     = None,
     already_done: int = 0,
     on_dialog_end: Optional[Callable[[int, Dict[str, Any]], None]] = None,
 ) -> List[Dict[str, Any]]:
@@ -191,7 +296,9 @@ def simulate_conversations_batch(
     List[Dict] : 완료된 대화 결과 목록
     """
     # ── 다이얼로그 컨텍스트 초기화 ──────────────────────────────────────────
-    _judge_llm = judge_llm if judge_llm is not None else coach_llm
+    _alignment_llm = alignment_llm if alignment_llm is not None else coach_llm
+    meal_tracker      = MealTrackerModel(model=coach_llm, config=config)
+    dialog_summarizer = DialogSummarizerModel(model=coach_llm, config=config)
     contexts: List[Dict[str, Any]] = []
     for idx in range(already_done, len(samples)):
         row = samples.iloc[idx]
@@ -199,7 +306,7 @@ def simulate_conversations_batch(
             "idx":          idx,
             "row":          row,
             "history":      SharedConversationHistory(context_window=config.context_window),
-            "coach":        CoachModel(
+            "coach":        InformationSeeker(
                                 model=coach_llm,
                                 nutrition_goal=row["goal_type"],
                                 meal_type=row["meal_type"],
@@ -212,13 +319,14 @@ def simulate_conversations_batch(
                                 config=config,
                                 meal_ingredient=str(row.get("meal_ingredient", "") or ""),
                             ),
-            "judge":        JudgeModel(
-                                model=_judge_llm,
+            "alignment":        AlignmentEstimator(
+                                model=_alignment_llm,
                                 nutrition_goal=row["goal_type"],
                                 config=config,
                             ),
             "terminated":   False,
             "terminated_by": "max_turns",
+            "dead_end_topics": [],
         })
 
     results: List[Dict[str, Any]] = []
@@ -240,21 +348,53 @@ def simulate_conversations_batch(
                 ctx["history"].add_turn(turn_idx=0, coach_utterance=q)
         else:
             # 턴 t>0: 배치 LLM 호출
-            coach_msgs = [ctx["coach"].get_messages(ctx["history"]) for ctx in active]
+            coach_msgs = [
+                ctx["coach"].get_messages(
+                    ctx["history"],
+                    dead_end_topics=ctx["dead_end_topics"] if ctx["dead_end_topics"] else None,
+                    mode="batch",
+                )
+                for ctx in active
+            ]
             coach_replies = batch_generate(
                 coach_llm, coach_msgs,
-                sampling=config.sampling,
+                sampling=config.coach_sampling,
                 max_new_tokens=config.max_new_tokens,
                 fallback="Could you tell me more about your meal?",
             )
             for ctx, reply in zip(active, coach_replies):
                 # Coach 가 실수로 종료 토큰을 출력한 경우 토큰만 제거하고 계속 진행합니다.
-                # (종료 조건은 Judge 만 담당합니다.)
+                # (종료 조건은 Alignment Tracker 만 담당합니다.)
                 cleaned_reply = reply.replace(
                     SharedConversationHistory.TERMINATION_TOKEN, ""
                 ).strip()
                 if not cleaned_reply:
                     cleaned_reply = "Could you tell me more about your meal?"
+                # ── 배치 모드 중복 질문 감지 + 단건 재시도 ──────────────
+                _already = ctx["history"].get_all_coach_questions()
+                if _is_duplicate(cleaned_reply, _already):
+                    _retry_msgs = ctx["coach"].get_messages(
+                        ctx["history"],
+                        dead_end_topics=ctx["dead_end_topics"] if ctx["dead_end_topics"] else None,
+                        mode="batch",
+                    ) + [{
+                        "role": "user",
+                        "content": (
+                            "[SYSTEM NOTE: The question you just generated was already asked. "
+                            "Please ask about a completely different food item or a new aspect "
+                            "that has NOT yet been covered in this conversation.]"
+                        ),
+                    }]
+                    from utils.llm_utils import generate_response as _gen_single
+                    _retry = _gen_single(
+                        coach_llm, _retry_msgs,
+                        max_new_tokens=config.max_new_tokens,
+                        sampling=config.coach_sampling,
+                    ).strip()
+                    if _retry and not _is_duplicate(_retry, _already):
+                        cleaned_reply = _retry
+                    elif _retry:
+                        cleaned_reply = "Could you tell me more about how this meal is put together?"
                 ctx["coach"].own_buffer.add(cleaned_reply)
                 ctx["history"].add_turn(turn_idx=turn_idx, coach_utterance=cleaned_reply)
 
@@ -269,44 +409,61 @@ def simulate_conversations_batch(
             fallback="I'm not sure about that.",
         )
         for ctx, reply in zip(still_active, user_replies):
-            ctx["user"].own_buffer.add(reply)
-            ctx["history"].update_last_user_utterance(reply)
+            # [END] 태그 감지 및 제거
+            _natural_end = SharedConversationHistory.TERMINATION_TOKEN in reply
+            reply_clean = reply.replace(
+                SharedConversationHistory.TERMINATION_TOKEN, ""
+            ).strip()
+            if not reply_clean:
+                reply_clean = "I think that covers everything about my meal."
+            ctx["user"].own_buffer.add(reply_clean)
+            ctx["history"].update_last_user_utterance(reply_clean)
+            # 자연 종료 처리
+            if _natural_end:
+                ctx["terminated"]    = True
+                ctx["terminated_by"] = "natural_end"
+            # dead-end 추적: User가 non-answer면 해당 Coach 질문 기록
+            if _is_non_answer(reply_clean):
+                last_coach_q = ctx["history"].get_all_coach_questions()
+                if last_coach_q:
+                    ctx["dead_end_topics"].append(last_coach_q[-1])
 
-        # ── (2.5) Judge 판정 배치 ──────────────────────────────────────
-        # config.judge_min_turn 이후부터 매 턴 alignment 를 판정합니다.
+        # ── (2.5) Alignment Tracker: 정렬 판정 배치 ──────────────────────
+        # config.alignment_min_turn 이후부터 매 턴 alignment 를 판정합니다.
         # aligned == True 이면 해당 대화를 즉시 종료합니다.
-        # Judge 판정이 유일한 정상 종료 조건입니다.
-        judge_active = [ctx for ctx in still_active if not ctx["terminated"]]
-        if judge_active and judge_active[0]["judge"].should_judge(turn_idx):
-            judge_msgs = [ctx["judge"].get_messages(ctx["history"]) for ctx in judge_active]
-            judge_replies = batch_generate(
-                _judge_llm, judge_msgs,
-                sampling=config.judge_sampling,
-                max_new_tokens=config.judge_max_new_tokens,
+        # Alignment Tracker 판정이 유일한 정상 종료 조건입니다.
+        alignment_active = [ctx for ctx in still_active if not ctx["terminated"]]
+        if alignment_active and alignment_active[0]["alignment"].should_evaluate(turn_idx):
+            alignment_msgs = [ctx["alignment"].get_messages(ctx["history"]) for ctx in alignment_active]
+            alignment_replies = batch_generate(
+                _alignment_llm, alignment_msgs,
+                sampling=config.alignment_sampling,
+                max_new_tokens=config.alignment_max_new_tokens,
                 stop_at_newline=False,
                 fallback="{}",
             )
-            for ctx, reply in zip(judge_active, judge_replies):
-                aligned = ctx["judge"].apply_judgment(reply, turn_idx)
+            for ctx, reply in zip(alignment_active, alignment_replies):
+                aligned = ctx["alignment"].apply_judgment(reply, turn_idx)
                 # pred == true_label 일 때만 종료
                 # (aligned=True·label=True → 정답 aligned / aligned=False·label=False → 정답 not aligned)
                 true_label = (str(ctx["row"].get("expert_result", "yes")).strip().lower() == "yes")
                 if aligned == true_label:
                     ctx["terminated"]    = True
-                    ctx["terminated_by"] = "judge"
+                    ctx["terminated_by"] = "alignment"
 
-        # ── (3) 요약 갱신 스케줄 ──────────────────────────────────────
-        # 종료 조건: Judge aligned (step 2.5) 또는 max_turns 소진 (외부 루프).
-        # User 종료 토큰에 의한 정상 종료는 없습니다.
+        # ── (3) MealTracker + DialogSummarizer: 개별 스케줄 ─────
         completed = turn_idx + 1
         for ctx in still_active:
-            if not ctx["terminated"] and completed % config.summarize_every == 0:
-                _update_summary(ctx["history"], coach_llm, config)
+            if not ctx["terminated"]:
+                if completed % config.meal_track_every == 0:
+                    _update_meal_fact_sheet(ctx["history"], meal_tracker)
+                if completed % config.summarize_every == 0:
+                    _update_dialog_summary(ctx["history"], dialog_summarizer)
 
         # 이번 라운드에서 종료된 대화를 results 로 이동
         just_done = [c for c in active if c["terminated"]]
         for ctx in just_done:
-            _update_summary(ctx["history"], coach_llm, config)
+            _update_summaries(ctx["history"], meal_tracker, dialog_summarizer)
             result = _build_result(
                 ctx["idx"],
                 int(ctx["row"]["goal_id"]),
@@ -316,7 +473,7 @@ def simulate_conversations_batch(
                 ctx["row"]["meal_description"],
                 ctx["history"],
                 ctx["terminated_by"],
-                ctx["judge"],
+                ctx["alignment"],
                 expert_result=ctx["row"]["expert_result"],
             )
             results.append(result)
@@ -327,7 +484,7 @@ def simulate_conversations_batch(
     # max_turns 소진 후에도 남은 대화 처리
     remaining = [c for c in contexts if not c["terminated"]]
     for ctx in remaining:
-        _update_summary(ctx["history"], coach_llm, config)
+        _update_summaries(ctx["history"], meal_tracker, dialog_summarizer)
         result = _build_result(
             ctx["idx"],
             int(ctx["row"]["goal_id"]),
@@ -337,7 +494,7 @@ def simulate_conversations_batch(
             ctx["row"]["meal_description"],
             ctx["history"],
             "max_turns",
-            ctx["judge"],
+            ctx["alignment"],
             expert_result=ctx["row"]["expert_result"],
         )
         results.append(result)
@@ -353,26 +510,58 @@ def simulate_conversations_batch(
 # 내부 헬퍼
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _update_summary(
+def _update_summaries(
     history: SharedConversationHistory,
-    llm,
-    config: SimulationConfig,
+    meal_tracker: MealTrackerModel,
+    dialog_summarizer: DialogSummarizerModel,
 ) -> None:
-    """현재까지의 대화를 요약하여 history.summary 를 갱신합니다."""
+    """MealTracker + DialogSummarizer 를 사용하여 두 종류의 요약을 갱신합니다."""
     if len(history) == 0:
         return
 
-    conversation_text = "\n".join(
-        f"Coach: {t['coach_utterance']}\nUser: {t['user_utterance']}"
-        for t in history.to_dict_list()
-        if t.get("coach_utterance") and t.get("user_utterance")
+    conversation_text = history.to_plain_text()
+    if not conversation_text.strip():
+        return
+
+    # (1) Meal Fact Sheet 갱신 (Alignment Tracker 용)
+    history.update_meal_fact_sheet(
+        meal_tracker.extract(conversation_text)
     )
-    if conversation_text.strip():
-        history.summary = summarize_conversation(
-            llm,
-            conversation_text,
-            max_new_tokens=config.summarize_max_new_tokens,
-        )
+
+    # (2) Dialog Summary 갱신 (Coach/User 용)
+    history.update_dialog_summary(
+        dialog_summarizer.summarize(conversation_text)
+    )
+
+
+def _update_meal_fact_sheet(
+    history: SharedConversationHistory,
+    meal_tracker: MealTrackerModel,
+) -> None:
+    """MealTracker만 사용하여 Meal Fact Sheet를 갱신합니다."""
+    if len(history) == 0:
+        return
+    conversation_text = history.to_plain_text()
+    if not conversation_text.strip():
+        return
+    history.update_meal_fact_sheet(
+        meal_tracker.extract(conversation_text)
+    )
+
+
+def _update_dialog_summary(
+    history: SharedConversationHistory,
+    dialog_summarizer: DialogSummarizerModel,
+) -> None:
+    """DialogSummarizer만 사용하여 대화 요약을 갱신합니다."""
+    if len(history) == 0:
+        return
+    conversation_text = history.to_plain_text()
+    if not conversation_text.strip():
+        return
+    history.update_dialog_summary(
+        dialog_summarizer.summarize(conversation_text)
+    )
 
 
 def _build_result(
@@ -384,12 +573,12 @@ def _build_result(
     meal_description: str,
     history:          SharedConversationHistory,
     terminated_by:    str,
-    judge:            Optional[JudgeModel] = None,
+    alignment_tracker: Optional[AlignmentEstimator] = None,
     expert_result:    str = "yes",
 ) -> Dict[str, Any]:
     """결과 딕셔너리를 일관된 형식으로 생성합니다."""
-    pred_alignment  = judge.is_aligned  if judge is not None else None
-    pred_score      = judge.last_score   if judge is not None else None
+    pred_alignment  = alignment_tracker.is_aligned  if alignment_tracker is not None else None
+    pred_score      = alignment_tracker.last_score   if alignment_tracker is not None else None
     true_alignment = (expert_result.strip().lower() == "yes")
     if pred_alignment is not None:
         alignment_correct = (pred_alignment == true_alignment)
@@ -404,12 +593,13 @@ def _build_result(
         "meal_type":         meal_type,
         "meal_description":  meal_description,
         "turns":             history.to_dict_list(),
-        "summary":           history.summary,
+        "meal_fact_sheet":   history.meal_fact_sheet,
+        "dialog_summary":    history.dialog_summary,
         "terminated_by":     terminated_by,
         "pred_alignment":    pred_alignment,
         "pred_score":        pred_score,       # 정규화된 마지막 판정 점수 [0, 1]
         "true_alignment":    true_alignment,
         "alignment_correct": alignment_correct,
-        "alignment_history": judge.judgment_history if judge is not None else [],
+        "alignment_history": alignment_tracker.judgment_history if alignment_tracker is not None else [],
         # alignment_history 각 원소: {turn_idx, aligned, score, raw_output}
     }

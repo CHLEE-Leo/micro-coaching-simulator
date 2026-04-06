@@ -10,7 +10,9 @@ core/memory.py
 
   SharedConversationHistory
     Coach ↔ User 의 공통 대화 기록.
-    context_window 만큼만 최근 턴을 반환하고, 나머지는 요약(summary) 로 대체합니다.
+    context_window 만큼만 최근 턴을 반환하고, 나머지는 두 종류의 요약으로 대체합니다.
+    - meal_fact_sheet : 구조화된 식사 정보 (Alignment Tracker 용)  → meal_tracker.py 가 생성
+    - dialog_summary  : 대화 흐름 서술형 요약 (Coach/User 용) → dialog_summarizer.py 가 생성
     (Principle 3 + 4)
 """
 
@@ -112,7 +114,9 @@ class SharedConversationHistory:
     ----
     1. 턴 단위 대화를 시간 순으로 누적
     2. context_window 내 최근 턴만 chat_template 형식으로 반환  (Principle 3)
-    3. 요약 갱신·조회  (Principle 4)
+    3. 두 종류의 요약 갱신·조회  (Principle 4)
+       - meal_fact_sheet : MealTracker 가 생성한 구조화된 식사 정보 → Alignment Tracker 입력
+       - dialog_summary  : DialogSummarizer 가 생성한 대화 흐름 요약 → Coach/User 입력
     4. 전체 대화를 평문(plain text)으로 직렬화 (요약 생성·저장에 활용)
 
     Usage
@@ -123,8 +127,9 @@ class SharedConversationHistory:
     user_msgs  = hist.build_messages(perspective="user",  system_prompt="...")
     """
 
-    # 종료 신호: User 가 이 문자열을 포함하면 대화를 종료합니다.
-    TERMINATION_TOKEN = "That's all about my meal."
+    # 종료 신호: User 가 이 태그를 포함하면 대화를 종료합니다.
+    # User 모델이 자연스러운 종료 멘트 뒤에 [END] 태그를 붙이면 감지됩니다.
+    TERMINATION_TOKEN = "[END]"
 
     def __init__(self, context_window: int = 5):
         """
@@ -135,7 +140,12 @@ class SharedConversationHistory:
         """
         self.context_window = context_window
         self._turns: List[_Turn] = []
-        self.summary: str = ""          # 요약 (principle 4)
+
+        # ── 두 종류의 요약 (Principle 4) ────────────────────────────────
+        # meal_fact_sheet : MealTracker 출력 → Alignment Tracker 판정 입력
+        # dialog_summary  : DialogSummarizer 출력 → Coach/User 시스템 프롬프트
+        self.meal_fact_sheet: str = ""
+        self.dialog_summary:  str = ""
 
     # ── 턴 추가 ─────────────────────────────────────────────────────────────
     def add_turn(
@@ -247,14 +257,18 @@ class SharedConversationHistory:
         return messages
 
     # ── 요약 갱신 (Principle 4) ────────────────────────────────────────────
-    def update_summary(self, new_summary: str) -> None:
-        """요약을 갱신합니다."""
-        self.summary = new_summary.strip()
+    def update_meal_fact_sheet(self, new_fact_sheet: str) -> None:
+        """MealTracker 가 생성한 Meal Fact Sheet 를 갱신합니다 (Alignment Tracker 용)."""
+        self.meal_fact_sheet = new_fact_sheet.strip()
+
+    def update_dialog_summary(self, new_summary: str) -> None:
+        """DialogSummarizer 가 생성한 대화 흐름 요약을 갱신합니다 (Coach/User 용)."""
+        self.dialog_summary = new_summary.strip()
 
     # ── 직렬화 ──────────────────────────────────────────────────────────────
     def to_plain_text(self) -> str:
         """
-        전체 대화를 sumbmarizer 에 넘길 평문으로 직렬화합니다.
+        전체 대화를 MealTracker / DialogSummarizer 에 넘길 평문으로 직렬화합니다.
 
         Returns
         -------
@@ -299,25 +313,44 @@ class SharedConversationHistory:
             for t in self._turns
         ]
 
-    def to_judge_context(self) -> str:
+    def to_recent_turns_text(self, n: int = 0) -> str:
         """
-        Judge 모델의 컨텍스트 블록을 생성합니다.
+        최근 N턴의 대화를 평문으로 반환합니다.
+        TextGen 이 최근 대화 맥락(사용자 수락/거부 등)을 참조할 때 사용합니다.
+        to_alignment_context() 와 달리 항상 대화 원문을 반환합니다.
 
-        User / Coach 와 동일한 뷰를 제공합니다:
-          - (있으면) 대화 요약  → 오래된 턴 전체를 압축
-          - 최근 context_window 턴의 원문  → 요약 이후 신규 정보 보완
-
-        이렇게 하면 Judge 가 항상 summary + 최신 대화 원문을 함께 보며
-        판정하게 되어 User / Coach 와 일관된 대화 상태 인식이 보장됩니다.
+        Parameters
+        ----------
+        n : 반환할 최근 턴 수 (0이면 context_window 기본값 사용)
         """
+        turns = self._turns[-(n or self.context_window):] if (n or self.context_window) > 0 else self._turns
         parts: List[str] = []
+        for turn in turns:
+            parts.append(f"Coach: {turn.coach_utterance}")
+            if turn.user_utterance:
+                parts.append(f"User: {turn.user_utterance}")
+        return "\n".join(parts).strip() or "(no conversation yet)"
 
-        if self.summary:
-            parts.append("[Conversation summary so far]")
-            parts.append(self.summary)
-            parts.append("")
-            parts.append("[Recent turns]")
+    def to_alignment_context(self) -> str:
+        """
+        Alignment Tracker 모델의 컨텍스트 블록을 생성합니다.
 
+        Original classifier 와의 정합성:
+          original classifier 의 context InputField 에는 순수 식사 설명
+          (meal description) 만 들어갑니다. 대화 원문(Recent turns)은 포함되지 않습니다.
+          따라서 Meal Fact Sheet 가 있으면 **그것만** context 로 사용하고,
+          아직 Fact Sheet 가 없는 초기 턴에서는 대화 원문을 fallback 으로 사용합니다.
+
+        Meal Fact Sheet 는 MealTracker Agent 가 대화에서 추출한 구조화된
+        식사 정보이므로, Alignment Tracker 의 expert_workflow Step 1 ("Scan through each
+        ingredient") 에 바로 사용할 수 있는 형태입니다.
+        """
+        # Meal Fact Sheet 가 있으면 그것만 사용 (original classifier 의 meal_description 역할)
+        if self.meal_fact_sheet:
+            return self.meal_fact_sheet
+
+        # Fact Sheet 가 아직 없는 초기 턴 → 대화 원문을 fallback 으로 사용
+        parts: List[str] = []
         for turn in self._windowed_turns():
             parts.append(f"Coach: {turn.coach_utterance}")
             if turn.user_utterance:
