@@ -8,7 +8,7 @@ _create_simulated_dialogs.py
 _functions_for_general.py
 _functions_for_simulation_baseline.py
 _functions_for_simulation.py
-AGENT.md
+AGENTS.md
 *.bak
 
 .vscode/
