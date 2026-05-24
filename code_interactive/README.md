@@ -23,7 +23,9 @@ conda activate micro-coaching-interactive
 cp .env.example .env
 ```
 
-Edit `.env` and set `OPENAI_API_KEY`.
+Edit `.env` and set `OPENAI_API_KEY`. Keep `OPENAI_BASE_URL` set to
+`https://us.api.openai.com/v1` when your OpenAI project requires the US
+regional endpoint.
 
 ## Included Runtime Data
 

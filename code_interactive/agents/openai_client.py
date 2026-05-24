@@ -32,9 +32,10 @@ class OpenAIClient:
                 "Add a valid API key to code_interactive/.env or export it "
                 "as an environment variable."
             )
+        base_url = os.environ.get("OPENAI_BASE_URL") or None
 
         self._model_name = model_name
-        self._client = OpenAI(api_key=api_key)
+        self._client = OpenAI(api_key=api_key, base_url=base_url)
 
     @property
     def model_name(self) -> str:
