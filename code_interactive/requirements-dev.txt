@@ -1,4 +1,4 @@
 -r requirements.txt
 
-pytest>=8.0.0
-requests>=2.31.0
+pytest>=8,<9
+requests>=2.31,<3

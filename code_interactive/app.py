@@ -164,7 +164,7 @@ class TurnRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """메인 UI 페이지를 반환합니다. / Serve the main UI page."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/api/status")
