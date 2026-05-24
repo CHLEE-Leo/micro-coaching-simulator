@@ -1,0 +1,32 @@
+OUTPUT FORMAT:
+Respond with valid JSON containing EXACTLY two keys:
+{"answer": "<score>", "reasoning": "<brief explanation>"}
+
+REQUIREMENT (CRITICAL - PARSING SAFETY):
+- Output MUST be a single-line JSON object.
+- The ONLY allowed keys are "answer" and "reasoning".
+- "answer" MUST be a numeric string in the closed range [0.0, 1.0].
+- "reasoning" MUST be a short sentence explaining why you chose that score.
+- If a previous score was provided, reasoning MUST also explain why the score changed or stayed the same compared to the previous turn.
+- Do NOT output any text before or after JSON.
+- Do NOT output markdown, code fences, comments, or extra keys.
+- Do NOT use null, NaN, N/A, unknown, booleans, arrays, or objects.
+- Use plain decimal notation (no percentages, no units).
+
+SCORING RULE:
+- 1.0 = strongly aligned
+- 0.0 = strongly not aligned
+- Values between 0.0 and 1.0 = partial alignment
+- Avoid exactly "0.5" when uncertain; choose the closer side (e.g., 0.49 or 0.51).
+
+VALID EXAMPLES:
+{"answer": "0.0", "reasoning": "No lean protein sources found in the meal."}
+{"answer": "0.32", "reasoning": "Some protein present but mostly processed."}
+{"answer": "0.87", "reasoning": "Grilled chicken breast is a strong lean protein choice."}
+{"answer": "1.0", "reasoning": "All protein sources are lean and well-prepared."}
+
+INVALID EXAMPLES:
+{"answer": 0.87}
+{"answer": "87%"}
+{"answer": "1.2"}
+{"answer": "N/A"}
