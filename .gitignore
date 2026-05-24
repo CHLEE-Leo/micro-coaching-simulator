@@ -1,0 +1,26 @@
+# _create_simulated_dialogs.py
+# _functions_for_general.py
+# _functions_for_simulation_baseline.py
+# _functions_for_simulation.py
+# *.bak\nvllm_server.log
+
+__pycache__
+.claude/
+.github/
+.venv/
+.vscode/
+analysis/
+Bloom/
+chats/
+code/
+code_interactive/agents/data/*
+data/
+docs/
+.codex
+.env
+AGENTS.md
+README(eng).md
+README.md
+# # Keep research analysis artifacts tracked.
+# !analysis/
+# !analysis/**
