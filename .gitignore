@@ -29,7 +29,7 @@ docs/
 AGENTS.md
 README(eng).md
 README.md
-!code_interactive/README.md
+code_interactive/README.md
 # # Keep research analysis artifacts tracked.
 # !analysis/
 # !analysis/**
