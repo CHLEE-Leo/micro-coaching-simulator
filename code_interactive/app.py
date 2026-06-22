@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Optional
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -35,6 +36,8 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 _HERE     = Path(__file__).resolve().parent   # code_interactive/
+load_dotenv(_HERE / ".env")
+load_dotenv(_HERE.parent / ".env")
 
 try:
     from .web_app_config import WebAppConfig

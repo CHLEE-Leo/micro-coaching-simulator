@@ -800,9 +800,10 @@ class Orchestrator:
             self._decision_history.append({"turn_idx": turn_idx, **decision})
             return decision
         except OrchestratorParseError as first_err:
+            first_error_reason = first_err.reason
             print(
                 f"[Orchestrator-Retry:routing] 1st parse failed "
-                f"(turn={turn_idx}, phase={phase}) - {first_err.reason}; retrying..."
+                f"(turn={turn_idx}, phase={phase}) - {first_error_reason}; retrying..."
             )
 
         # 2
@@ -811,7 +812,7 @@ class Orchestrator:
                 base_msgs=base_msgs,
                 assistant_prev=raw_output,
                 feedback_template=_ROUTER_RETRY_FEEDBACK,
-                error_reason=first_err.reason,
+                error_reason=first_error_reason,
                 reinvoke_fn=reinvoke_fn,
             )
         except Exception as e:
@@ -846,9 +847,10 @@ class Orchestrator:
         try:
             return self._parse_post_assessment_strict(raw_output)
         except OrchestratorParseError as first_err:
+            first_error_reason = first_err.reason
             print(
                 f"[Orchestrator-Retry:post_assessment] 1st parse failed - "
-                f"{first_err.reason}; retrying..."
+                f"{first_error_reason}; retrying..."
             )
 
         try:
@@ -856,7 +858,7 @@ class Orchestrator:
                 base_msgs=base_msgs,
                 assistant_prev=raw_output,
                 feedback_template=_POST_ASSESS_RETRY_FEEDBACK,
-                error_reason=first_err.reason,
+                error_reason=first_error_reason,
                 reinvoke_fn=reinvoke_fn,
             )
         except Exception as e:
@@ -888,9 +890,10 @@ class Orchestrator:
             self._last_assessment = assessment
             return assessment
         except OrchestratorParseError as first_err:
+            first_error_reason = first_err.reason
             print(
                 f"[Orchestrator-Retry:assessment] 1st parse failed - "
-                f"{first_err.reason}; retrying..."
+                f"{first_error_reason}; retrying..."
             )
 
         try:
@@ -898,7 +901,7 @@ class Orchestrator:
                 base_msgs=base_msgs,
                 assistant_prev=raw_output,
                 feedback_template=_ASSESSMENT_RETRY_FEEDBACK,
-                error_reason=first_err.reason,
+                error_reason=first_error_reason,
                 reinvoke_fn=reinvoke_fn,
             )
         except Exception as e:

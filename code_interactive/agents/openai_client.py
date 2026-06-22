@@ -5,15 +5,9 @@ from __future__ import annotations
 import os
 import re
 import time
-from pathlib import Path
 from typing import Dict, List, Optional
 
-from dotenv import load_dotenv
 from openai import OpenAI
-
-_CODE_INTERACTIVE_DIR = Path(__file__).resolve().parents[1]
-load_dotenv(_CODE_INTERACTIVE_DIR / ".env")
-load_dotenv(_CODE_INTERACTIVE_DIR.parent / ".env")
 
 
 def _sanitize(text: str) -> str:
@@ -24,15 +18,21 @@ def _sanitize(text: str) -> str:
 class OpenAIClient:
     """Small wrapper around the OpenAI Responses API."""
 
-    def __init__(self, model_name: str = "gpt-5.2"):
-        api_key = os.environ.get("OPENAI_API_KEY", "")
+    def __init__(
+        self,
+        model_name: str = "gpt-5.2",
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+    ):
+        api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         if not api_key or api_key.startswith("sk-your-"):
             raise ValueError(
                 "OPENAI_API_KEY is not configured. "
                 "Add a valid API key to code_interactive/.env or export it "
                 "as an environment variable."
             )
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
+        base_url = base_url or os.environ.get("OPENAI_BASE_URL") or None
 
         self._model_name = model_name
         self._client = OpenAI(api_key=api_key, base_url=base_url)
@@ -114,9 +114,14 @@ class OpenAIClient:
         return "[API_ERROR: max retries exceeded]"
 
 
-def load_model(model_name: str = "gpt-5.2") -> OpenAIClient:
+def load_model(
+    model_name: str = "gpt-5.2",
+    *,
+    api_key: str | None = None,
+    base_url: str | None = None,
+) -> OpenAIClient:
     """Create an OpenAI client for one model name."""
-    return OpenAIClient(model_name=model_name)
+    return OpenAIClient(model_name=model_name, api_key=api_key, base_url=base_url)
 
 
 def generate_response(

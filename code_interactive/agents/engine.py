@@ -87,6 +87,15 @@ class ConversationEngine:
         response_generator = ResponseGenerator(request.nutrition_goal, self.config)
         recommender = MealRecommender(request.nutrition_goal, self.config)
         guardrail = Guardrail(config=self.config)
+        if request.profile is not None:
+            context_tracker.set_profile_from_persona(
+                activity_level=request.profile.activity_level,
+                diet_preferences=list(request.profile.preferences or ()),
+                allergies=list(request.profile.allergies or ()),
+                health_concerns=list(
+                    request.profile.extra.get("health_concerns") or ()
+                ),
+            )
 
         early_result = self._run_tracking_stage(
             request=request,

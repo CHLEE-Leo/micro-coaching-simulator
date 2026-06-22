@@ -80,12 +80,19 @@ class Guardrail:
         ]
 
     def parse_output_guard(self, raw_output: str) -> Dict:
-        """parse_output_guard helper for the portable micro-coaching agent package."""
+        """Parse shadow output-guard telemetry.
+
+        Malformed or schema-incomplete guard output is neither pass nor fail.
+        It is recorded as an unusable verdict so host apps can count degraded
+        guardrail telemetry without mislabeling the visible coach reply.
+        """
         try:
             data = load_json_object(raw_output)
+            if "passed" not in data:
+                return {"passed": None, "reason": "output_guard_missing_passed"}
             return {
-                "passed": bool(data.get("passed", True)),
+                "passed": bool(data["passed"]),
                 "reason": str(data.get("reason", "")),
             }
         except (JSONOutputError, ValueError, TypeError):
-            return {"passed": True, "reason": ""}
+            return {"passed": None, "reason": "output_guard_parse_error"}

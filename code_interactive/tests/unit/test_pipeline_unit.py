@@ -148,6 +148,18 @@ class TestGuardrail:
         result = self.guard.parse_output_guard(raw)
         assert result["passed"] is False
 
+    def test_output_missing_passed_is_unusable_telemetry(self):
+        raw = '{"reason":"missing schema field"}'
+        result = self.guard.parse_output_guard(raw)
+        assert result["passed"] is None
+        assert result["reason"] == "output_guard_missing_passed"
+
+    def test_output_garbage_is_unusable_telemetry(self):
+        raw = "not json"
+        result = self.guard.parse_output_guard(raw)
+        assert result["passed"] is None
+        assert result["reason"] == "output_guard_parse_error"
+
     # U-G7: Markdown 코드블록 안 JSON
     def test_input_markdown_wrapped(self):
         raw = '```json\n{"passed":true}\n```'
