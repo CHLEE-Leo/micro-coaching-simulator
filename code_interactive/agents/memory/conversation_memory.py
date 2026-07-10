@@ -94,6 +94,12 @@ class SharedConversationHistory:
         # summarized by ContextTracker.
         self.context_base: str = ""
 
+        # Dialogue-operation facts summarized by InteractionStateTracker:
+        # answered questions, open questions, rejected options, and
+        # unavailable options. Planner modules use this to avoid redundant
+        # questions and context-insensitive recommendations.
+        self.interaction_state: str = ""
+
     def add_turn(
         self,
         turn_idx: int,
@@ -173,6 +179,12 @@ class SharedConversationHistory:
         if stripped_context:
             self.context_base = stripped_context
 
+    def update_interaction_state(self, new_interaction_state: str) -> None:
+        """Replace the dialogue-operation state when the tracker produced content."""
+        stripped_state = new_interaction_state.strip()
+        if stripped_state:
+            self.interaction_state = stripped_state
+
     def to_plain_text(self) -> str:
         """Return the full transcript as readable text."""
         lines: List[str] = []
@@ -249,6 +261,11 @@ class SharedConversationHistory:
         if self.meal_base:
             parts.append(
                 f"[Extracted meal information so far]\n{self.meal_base}"
+            )
+
+        if self.interaction_state:
+            parts.append(
+                f"[Interaction state]\n{self.interaction_state}"
             )
 
         return "\n\n".join(parts)

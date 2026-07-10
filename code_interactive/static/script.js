@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    Micro-Coaching  |  script.js
-   Landing -> Meal Config -> Coach -> Alignment Tracker -> Chat
+   Landing -> Meal Config -> Coach -> Chat
 ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -204,8 +204,8 @@ function bindEvents() {
     // Custom mode defaults
     S.wizard.conversationMode   = 'open-ended';
     S.wizard.contextTracking = true;
-    S.wizard.uncertaintyTracking = true;
-    S.wizard.alignmentEnabled    = true;
+    S.wizard.uncertaintyTracking = false;
+    S.wizard.alignmentEnabled    = false;
     S.wizard.alignmentGoalDef    = true;
     S.wizard.alignmentWorkflow   = true;
     S.wizard.alignmentOutputFormat = '0-1';
@@ -230,8 +230,8 @@ function bindEvents() {
     // Deploy mode defaults (same pipeline as custom, but UI hides all monitoring)
     S.wizard.conversationMode   = 'open-ended';
     S.wizard.contextTracking = true;
-    S.wizard.uncertaintyTracking = true;
-    S.wizard.alignmentEnabled    = true;
+    S.wizard.uncertaintyTracking = false;
+    S.wizard.alignmentEnabled    = false;
     S.wizard.alignmentGoalDef    = true;
     S.wizard.alignmentWorkflow   = true;
     S.wizard.alignmentOutputFormat = '0-1';
@@ -402,7 +402,7 @@ function goBackFromChat() {
   $('alignment-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="alignment-panel-empty"><p>Alignment Tracker evaluation will appear here once enough conversation turns are collected.</p></div>';
   $('meal-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="meal-panel-empty"><p>Meal Base will appear after MealTracker processes the conversation.</p></div>';
   $('certainty-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="certainty-panel-empty"><p>Certainty scores will appear when Uncertainty Tracking is enabled.</p></div>';
-  $('orchestrator-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="orchestrator-panel-empty"><p>Orchestrator decisions and MealRecommender results will appear here.</p></div>';
+  $('planner-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="planner-panel-empty"><p>Dialogue Planner decisions and Meal Recommender results will appear here.</p></div>';
   $('guardrail-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="guardrail-panel-empty"><p>Guardrail input/output will appear here for each turn.</p></div>';
   $('context-panel-cards').innerHTML = '<div class="alignment-panel-empty" id="context-panel-empty"><p>Context Base will appear after ContextTracker processes the conversation.</p></div>';
   $('chat-body').classList.remove('with-alignment');
@@ -628,7 +628,7 @@ function initChat({ firstQuestion, goal, mealDisplay, mode, alignmentEnabled }) 
     setTabVisible('tab-certainty', S.wizard.uncertaintyTracking);
     setTabVisible('tab-meal', true);  // MealTracker always runs
     setTabVisible('tab-context', true);  // ContextTracker always runs (profile + summarization)
-    setTabVisible('tab-orchestrator', true);  // Orchestrator always runs
+    setTabVisible('tab-dialogue-planner', true);  // Dialogue Planner always runs
     setTabVisible('tab-guardrail', true);  // Guardrail always runs
     // Activate first visible tab
     activateFirstVisibleTab();
@@ -644,8 +644,8 @@ function initChat({ firstQuestion, goal, mealDisplay, mode, alignmentEnabled }) 
   if (mealCards) mealCards.innerHTML = '<div class="alignment-panel-empty" id="meal-panel-empty"><p>Meal Base will appear after MealTracker processes the conversation.</p></div>';
   const certCards = $('certainty-panel-cards');
   if (certCards) certCards.innerHTML = '<div class="alignment-panel-empty" id="certainty-panel-empty"><p>Certainty scores will appear when Uncertainty Tracking is enabled.</p></div>';
-  const orchCards = $('orchestrator-panel-cards');
-  if (orchCards) orchCards.innerHTML = '<div class="alignment-panel-empty" id="orchestrator-panel-empty"><p>Orchestrator decisions and MealRecommender results will appear here.</p></div>';
+  const plannerCards = $('planner-panel-cards');
+  if (plannerCards) plannerCards.innerHTML = '<div class="alignment-panel-empty" id="planner-panel-empty"><p>Dialogue Planner decisions and Meal Recommender results will appear here.</p></div>';
   const guardCards = $('guardrail-panel-cards');
   if (guardCards) guardCards.innerHTML = '<div class="alignment-panel-empty" id="guardrail-panel-empty"><p>Guardrail input/output will appear here for each turn.</p></div>';
   const ctxCards = $('context-panel-cards');
@@ -1321,30 +1321,40 @@ function updateMonitorData(data) {
     _appendCardToPanel(card, 'certainty-panel-cards', 'certainty-panel-empty');
   }
 
-  /* ── Orchestrator tab — structured decision card ────────────── */
-  if (data.orchestrator_decision) {
+  /* ── Dialogue Planner tab — structured decision card ────────────── */
+  const plannerDecision = data.dialogue_plan;
+  const plannerRawOutput = data.dialogue_planner_raw_output;
+  const plannerInput = data.dialogue_planner_input;
+  if (plannerDecision) {
     const card = document.createElement('div');
-    card.className = 'alignment-card orchestrator-card';
-    const dec = data.orchestrator_decision;
+    card.className = 'alignment-card planner-card';
+    const dec = plannerDecision;
 
     const phaseLabels = {
+      'exploration':'Exploration','assessment':'Assessment',
+      'recommendation':'Recommendation','negotiation':'Negotiation',
+      'confirmation':'Confirmation','finalization':'Finalization',
+      'motivational_ending':'Finalization','terminated':'Terminated',
       'info_seeking':'Info Seeking','rec_info_seeking':'Rec Info Seeking',
-      'recommending':'Recommending','negotiation':'Negotiation',
-      'assessment':'Assessment',
-      'motivational_ending':'Motivational Ending','terminated':'Terminated',
+      'recommending':'Recommending',
     };
     const actionLabels = {
-      'terminate':'Terminate','recommend':'Recommend',
+      'inquire':'Inquire','assess':'Assess','terminate':'Terminate','recommend':'Recommend',
       'evaluate':'Evaluate','seek_rec_info':'Seek Rec Info',
-      'seek_meal_info':'Seek Meal Info','motivational_close':'Motivational Close',
-      'respond':'Respond',
+      'seek_meal_info':'Seek Meal Info','motivational_close':'Close',
+      'respond':'Respond','confirm':'Confirm','handoff':'Handoff','close':'Close',
     };
     const phaseActions = {
+      'exploration':       ['inquire','respond','assess','terminate'],
+      'assessment':        ['assess','terminate'],
+      'recommendation':    ['recommend','respond','confirm','terminate'],
+      'negotiation':       ['respond','inquire','assess','recommend','handoff','confirm','close','terminate'],
+      'confirmation':      ['confirm','respond','assess','close','terminate'],
+      'finalization':      ['close','terminate'],
       'info_seeking':       ['seek_meal_info','evaluate','respond','terminate'],
       'rec_info_seeking':   ['seek_rec_info','recommend','respond','terminate'],
-      'recommending':       ['recommend','seek_rec_info','motivational_close','respond','terminate'],
-      'negotiation':        ['seek_rec_info','recommend','motivational_close','respond','terminate'],
-      'motivational_ending':['motivational_close','terminate'],
+      'recommending':       ['assess','recommend','confirm','respond','terminate'],
+      'motivational_ending':['close','terminate'],
       'terminated':         ['terminate'],
     };
     const allIntents = ['informing','accepting','inquiring','deferring','passive','rejecting','disengaging'];
@@ -1495,11 +1505,11 @@ function updateMonitorData(data) {
     }
 
     // ── Raw I/O collapsibles
-    if (data.orchestrator_input) card.appendChild(_mkToggleSection('Input (Router Prompt)', data.orchestrator_input, false));
-    if (data.orchestrator_raw_output !== null && data.orchestrator_raw_output !== undefined) {
-      card.appendChild(_mkToggleSection('Raw Output', data.orchestrator_raw_output || '(empty)', false));
+    if (plannerInput) card.appendChild(_mkToggleSection('Input (Planner Prompt)', plannerInput, false));
+    if (plannerRawOutput !== null && plannerRawOutput !== undefined) {
+      card.appendChild(_mkToggleSection('Raw Output', plannerRawOutput || '(empty)', false));
     }
-    _appendCardToPanel(card, 'orchestrator-panel-cards', 'orchestrator-panel-empty');
+    _appendCardToPanel(card, 'planner-panel-cards', 'planner-panel-empty');
   }
 
   /* ── Guardrail tab — Input Guard + Output Guard structured ──── */

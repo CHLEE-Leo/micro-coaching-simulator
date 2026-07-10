@@ -7,7 +7,7 @@ Self-critique에서 발견된 구조적 갭과 SKILL.md Phase 3 시나리오를 
 Edge Cases:
   E1. Disengagement detection — "I don't want coaching" → intent=disengaging → graceful exit
   E2. Mixed signals — allergy + disengaging combo
-  E3. Stall exit non-convertible phase — orchestrator_decision populated correctly
+  E3. Stall exit non-convertible phase — dialogue_plan populated correctly
   E4. Borderline meal — partially aligned, cross-validation boundary
   E5. Phase progression integrity — phase never regresses
   E6. Max turns exhaustion — hard limit produces closing message
@@ -57,7 +57,7 @@ def send_turn(sid, text):
         return api("POST", f"/api/session/{sid}/turn", {"user_reply": text})
     except requests.exceptions.HTTPError as e:
         if e.response is not None and e.response.status_code == 409:
-            return {"status": "terminated", "orchestrator_decision": {}}
+            return {"status": "terminated", "dialogue_plan": {}}
         raise
 
 
@@ -130,9 +130,9 @@ def test_e1_disengagement_detection():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        intent = orch_dec.get("user_intent", "")
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        intent = plan_dec.get("user_intent", "")
+        action = plan_dec.get("action", "")
         phase = t.get("phase", "")
         intents.append(intent)
         print(f"    T{i+1}: user='{text[:50]}' | intent={intent} | action={action} | phase={phase} | status={status}")
@@ -208,9 +208,9 @@ def test_e2_allergy_then_disengage():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        intent = orch_dec.get("user_intent", "")
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        intent = plan_dec.get("user_intent", "")
+        action = plan_dec.get("action", "")
         intents.append(intent)
         print(f"    T{i+1}: user='{text[:50]}' | intent={intent} | action={action} | status={status}")
         if status in ("terminated", "max_turns"):
@@ -247,19 +247,19 @@ def test_e2_allergy_then_disengage():
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# E3: Stall exit on non-convertible phase — orchestrator_decision populated
+# E3: Stall exit on non-convertible phase — dialogue_plan populated
 # ═════════════════════════════════════════════════════════════════════════════
 
-def test_e3_stall_exit_has_orch_decision():
+def test_e3_stall_exit_has_plan_decision():
     """
     사용자가 모호한 답변을 반복 → stall exit 발동 시
-    orchestrator_decision이 비어있지 않고 action이 존재하는지 확인.
+    dialogue_plan이 비어있지 않고 action이 존재하는지 확인.
     """
     print("\n" + "=" * 60)
-    print("  E3: Stall exit → orchestrator_decision populated")
+    print("  E3: Stall exit → dialogue_plan populated")
     print("=" * 60)
 
-    r = Result("E3: Stall exit orch_decision")
+    r = Result("E3: Stall exit plan_decision")
 
     data = create_session(nutrition_goal="lean_protein")
     sid = data["session_id"]
@@ -279,17 +279,17 @@ def test_e3_stall_exit_has_orch_decision():
         "I'm not sure.",
     ]
 
-    last_orch_decision = None
+    last_plan_decision = None
     terminated = False
     for i, text in enumerate(turns):
         if terminated:
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
-        intent = orch_dec.get("user_intent", "")
-        last_orch_decision = orch_dec
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
+        intent = plan_dec.get("user_intent", "")
+        last_plan_decision = plan_dec
         print(f"    T{i+1}: action={action} | intent={intent} | status={status}")
         if status in ("terminated", "max_turns"):
             terminated = True
@@ -304,11 +304,11 @@ def test_e3_stall_exit_has_orch_decision():
         f"terminated={terminated}",
     )
 
-    # 마지막 orchestrator_decision이 비어있지 않아야 함
+    # 마지막 dialogue_plan이 비어있지 않아야 함
     r.check(
-        "Last orchestrator_decision has action",
-        bool(last_orch_decision and last_orch_decision.get("action")),
-        f"last_orch_decision={last_orch_decision}",
+        "Last dialogue_plan has action",
+        bool(last_plan_decision and last_plan_decision.get("action")),
+        f"last_plan_decision={last_plan_decision}",
     )
 
     cleanup(sid)
@@ -346,8 +346,8 @@ def test_e4_borderline_meal():
         t = send_turn(sid, text)
         status = t.get("status", "")
         align = t.get("alignment_score")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         if align is not None:
             alignment_scores.append(align)
         print(f"    T{i+1}: action={action} | align={align} | status={status}")
@@ -423,8 +423,8 @@ def test_e5_phase_progression():
         t = send_turn(sid, text)
         status = t.get("status", "")
         phase = t.get("phase", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         phases.append(phase)
 
         current_order = PHASE_ORDER.get(phase, -1)
@@ -500,8 +500,8 @@ def test_e6_max_turns():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         turn_count += 1
         print(f"    T{i+1}: action={action} | status={status}")
         if status in ("terminated", "max_turns"):
@@ -561,9 +561,9 @@ def test_e7_acceptance_resets_counter():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        intent = orch_dec.get("user_intent", "")
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        intent = plan_dec.get("user_intent", "")
+        action = plan_dec.get("action", "")
         intents.append(intent)
         print(f"    T{i+1}: expected={expected} | actual={intent} | action={action} | status={status}")
         if status in ("terminated", "max_turns"):
@@ -637,8 +637,8 @@ def test_e8_natural_language_exit():
         t = send_turn(sid, text)
         turns_sent += 1
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         terminated_by = t.get("terminated_by", "")
         print(
             f"    T{turns_sent-1}: '{text[:50]}' → "
@@ -692,7 +692,7 @@ def main():
     tests = [
         test_e1_disengagement_detection,
         test_e2_allergy_then_disengage,
-        test_e3_stall_exit_has_orch_decision,
+        test_e3_stall_exit_has_plan_decision,
         test_e4_borderline_meal,
         test_e5_phase_progression,
         test_e6_max_turns,

@@ -51,21 +51,22 @@ class WebAppConfig:
 
     # ── LLM 프로바이더 — OpenAI Responses API ─────────────────────────────────
     # Heavy 모델: 사용자 대면 텍스트 생성, 정책 결정 등 고품질 추론 필요 모듈
-    chatgpt_model: str = "gpt-5.2"
+    chatgpt_model: str = "gpt-5.4"
     # Light 모델: 내부 평가/추적/필터링 등 경량 모듈
     chatgpt_light_model: str = "gpt-5.4-mini"
 
     # ── 모듈별 LLM 모델 지정 ─────────────────────────────────────────────────
     # "heavy" → chatgpt_model, "light" → chatgpt_light_model 로 치환.
-    # 구체적 모델명(예: "gpt-5.2")을 직접 지정할 수도 있음.
+    # 구체적 모델명(예: "gpt-5.4")을 직접 지정할 수도 있음.
     module_models: dict = field(default_factory=lambda: {
-        "phase_predictor":       "heavy",
-        "orchestrator":          "heavy",
+        "dialogue_planner":      "heavy",
+        "meal_assessor":         "heavy",
         "info_seeker":           "heavy",
         "recommender":           "heavy",
         "response_generator":    "heavy",
         "meal_tracker":          "light",
         "context_tracker":       "light",
+        "interaction_tracker":   "heavy",
         "alignment_estimator":   "light",
         "certainty_estimator":   "light",
         "guardrail":             "light",
@@ -76,15 +77,16 @@ class WebAppConfig:
     # none / low / medium / high — 모델의 내부 추론 깊이 제어.
     # reasoning이 불필요한 단순 생성 모듈은 "none", 판단 근거가 중요한 모듈은 "medium"~"high".
     module_reasoning_effort: dict = field(default_factory=lambda: {
-        "phase_predictor":       "medium",
-        "orchestrator":          "high",
+        "dialogue_planner":      "none",
+        "meal_assessor":         "none",
         "info_seeker":           "medium",
-        "recommender":           "medium",
+        "recommender":           "none",
         "response_generator":    "none",
-        "meal_tracker":          "low",
+        "meal_tracker":          "none",
         "context_tracker":       "low",
-        "alignment_estimator":   "medium",
-        "certainty_estimator":   "medium",
+        "interaction_tracker":   "none",
+        "alignment_estimator":   "none",
+        "certainty_estimator":   "none",
         "guardrail":             "low",
     })
 
@@ -93,15 +95,16 @@ class WebAppConfig:
     # 반환된 summary를 output JSON의 "reasoning" 키에 post-processing으로 삽입.
     # reasoning_effort="none"인 모듈은 summary가 생성되지 않으므로 False 유지.
     module_reasoning_summary: dict = field(default_factory=lambda: {
-        "phase_predictor":       True,
-        "orchestrator":          True,
+        "dialogue_planner":      False,
+        "meal_assessor":         False,
         "info_seeker":           False,
         "recommender":           False,
         "response_generator":    False,
         "meal_tracker":          False,
         "context_tracker":       False,
-        "alignment_estimator":   True,
-        "certainty_estimator":   True,
+        "interaction_tracker":   False,
+        "alignment_estimator":   False,
+        "certainty_estimator":   False,
         "guardrail":             False,
     })
 

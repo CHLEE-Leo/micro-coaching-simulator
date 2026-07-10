@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
@@ -20,7 +20,7 @@ class OpenAIClient:
 
     def __init__(
         self,
-        model_name: str = "gpt-5.2",
+        model_name: str = "gpt-5.4",
         *,
         api_key: str | None = None,
         base_url: str | None = None,
@@ -50,6 +50,7 @@ class OpenAIClient:
         max_tokens: int = 80,
         reasoning_effort: Optional[str] = None,
         reasoning_summary: Optional[str] = None,
+        response_schema: Optional[dict] = None,
     ) -> dict:
         sanitized = [
             {"role": m.get("role", "user"), "content": _sanitize(m.get("content", ""))}
@@ -74,7 +75,74 @@ class OpenAIClient:
         if reasoning:
             kwargs["reasoning"] = reasoning
 
+        if response_schema:
+            kwargs["text"] = {
+                "format": {
+                    "type": "json_schema",
+                    "name": str(response_schema.get("name") or "structured_output"),
+                    "schema": response_schema["schema"],
+                    "strict": bool(response_schema.get("strict", True)),
+                }
+            }
+
         return kwargs
+
+    @staticmethod
+    def _extract_output_text(response: Any) -> str:
+        """Extract text from Responses API objects across SDK variants."""
+        direct = getattr(response, "output_text", None)
+        if isinstance(direct, str) and direct.strip():
+            return direct
+
+        chunks: list[str] = []
+
+        def visit(node: Any) -> None:
+            if node is None:
+                return
+            if isinstance(node, str):
+                if node.strip():
+                    chunks.append(node)
+                return
+            if isinstance(node, (list, tuple)):
+                for item in node:
+                    visit(item)
+                return
+            if isinstance(node, dict):
+                text = node.get("text")
+                if isinstance(text, str) and text.strip():
+                    chunks.append(text)
+                for key in ("output", "content", "message"):
+                    if key in node:
+                        visit(node.get(key))
+                return
+            text = getattr(node, "text", None)
+            if isinstance(text, str) and text.strip():
+                chunks.append(text)
+            for attr in ("output", "content", "message"):
+                if hasattr(node, attr):
+                    visit(getattr(node, attr))
+
+        visit(getattr(response, "output", None))
+        if not chunks and hasattr(response, "model_dump"):
+            try:
+                dumped = response.model_dump(exclude_none=True)
+            except TypeError:
+                dumped = response.model_dump()
+            visit(dumped.get("output"))
+
+        return "\n".join(part.strip() for part in chunks if part.strip())
+
+    @staticmethod
+    def _empty_response_details(response: Any) -> str:
+        """Return compact diagnostics for empty Responses API outputs."""
+        status = getattr(response, "status", None)
+        incomplete = getattr(response, "incomplete_details", None)
+        output = getattr(response, "output", None)
+        output_len = len(output) if isinstance(output, (list, tuple)) else "n/a"
+        return (
+            f"status={status!r}, incomplete_details={incomplete!r}, "
+            f"output_len={output_len}"
+        )
 
     def invoke(
         self,
@@ -83,18 +151,37 @@ class OpenAIClient:
         max_tokens: int = 80,
         reasoning_effort: Optional[str] = None,
         reasoning_summary: Optional[str] = None,
+        response_schema: Optional[dict] = None,
     ) -> str:
         kwargs = self._build_kwargs(
-            messages, sampling, max_tokens, reasoning_effort, reasoning_summary,
+            messages,
+            sampling,
+            max_tokens,
+            reasoning_effort,
+            reasoning_summary,
+            response_schema,
         )
-        max_retries = 2
+        max_retries = 3 if response_schema else 2
         for attempt in range(max_retries):
             try:
                 response = self._client.responses.create(**kwargs)
-                text = response.output_text or ""
+                text = self._extract_output_text(response)
                 if not text.strip():
-                    print(f"[OpenAI] WARNING: empty response "
-                          f"(model={self._model_name}, tokens={max_tokens})")
+                    details = self._empty_response_details(response)
+                    if response_schema and attempt < max_retries - 1:
+                        wait = 2 ** attempt
+                        print(
+                            "[OpenAI] Empty structured response "
+                            f"(attempt {attempt + 1}/{max_retries}), "
+                            f"retrying in {wait}s: model={self._model_name}, "
+                            f"tokens={max_tokens}, {details}"
+                        )
+                        time.sleep(wait)
+                        continue
+                    print(
+                        "[OpenAI] WARNING: empty response "
+                        f"(model={self._model_name}, tokens={max_tokens}, {details})"
+                    )
                 return text
             except Exception as e:
                 err_str = str(e)
@@ -115,7 +202,7 @@ class OpenAIClient:
 
 
 def load_model(
-    model_name: str = "gpt-5.2",
+    model_name: str = "gpt-5.4",
     *,
     api_key: str | None = None,
     base_url: str | None = None,
@@ -132,6 +219,7 @@ def generate_response(
     stop_at_newline: bool = True,
     reasoning_effort: Optional[str] = None,
     reasoning_summary: Optional[str] = None,
+    response_schema: Optional[dict] = None,
 ) -> str:
     raw = client.invoke(
         messages,
@@ -139,6 +227,7 @@ def generate_response(
         max_tokens=max_new_tokens,
         reasoning_effort=reasoning_effort,
         reasoning_summary=reasoning_summary,
+        response_schema=response_schema,
     )
 
     if stop_at_newline:

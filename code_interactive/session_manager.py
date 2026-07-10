@@ -31,7 +31,6 @@ try:
     from .agents.modules.guardrail import Guardrail
     from .agents.modules.information_seeker import InformationSeeker
     from .agents.modules.meal_recommender import MealRecommender
-    from .agents.modules.orchestrator import Orchestrator
 except ImportError:  # pragma: no cover - script execution via python app.py
     from web_app_config import WebAppConfig
     from agents.agent_config import AgentConfig
@@ -49,7 +48,6 @@ except ImportError:  # pragma: no cover - script execution via python app.py
     from agents.modules.guardrail import Guardrail
     from agents.modules.information_seeker import InformationSeeker
     from agents.modules.meal_recommender import MealRecommender
-    from agents.modules.orchestrator import Orchestrator
 
 logger = logging.getLogger("micro-coach-interactive")
 
@@ -66,6 +64,9 @@ class TurnRecord:
     turn_idx: int
     coach_utterance: str
     coach_messages: List[str] = field(default_factory=list)
+    coach_message_objects: List[Dict[str, Any]] = field(default_factory=list)
+    generated_coach_messages: List[str] = field(default_factory=list)
+    generated_coach_message_objects: List[Dict[str, Any]] = field(default_factory=list)
     user_utterance: Optional[str] = None
     alignment_aligned: Optional[bool] = None
     alignment_score: Optional[float] = None
@@ -73,9 +74,9 @@ class TurnRecord:
     certainty_score: Optional[float] = None
     certainty_reasoning: Optional[str] = None
     phase: Optional[str] = None
-    orchestrator_action: Optional[str] = None
-    orchestrator_reasoning: Optional[str] = None
-    orchestrator_instruction: Optional[str] = None
+    planner_action: Optional[str] = None
+    planner_reasoning: Optional[str] = None
+    planner_instruction: Optional[str] = None
     intent_summary: Optional[str] = None
     user_intent: Optional[str] = None
     guardrail_blocked: bool = False
@@ -83,6 +84,7 @@ class TurnRecord:
     output_guard_passed: Optional[bool] = None
     meal_tracker_output: Optional[str] = None
     context_tracker_output: Optional[str] = None
+    interaction_state: Optional[str] = None
     recommendation_result: Optional[Dict[str, Any]] = None
     assessment_result: Optional[Dict[str, Any]] = None
 
@@ -104,7 +106,6 @@ class Session:
     context_tracking: bool = True
     uncertainty_tracking: bool = False
     certainty_tracker: Optional[CertaintyEstimator] = None
-    orchestrator: Optional[Orchestrator] = None
     meal_recommender: Optional[MealRecommender] = None
     guardrail: Optional[Guardrail] = None
     context_tracker: Optional[ContextTracker] = None
@@ -170,6 +171,7 @@ class SessionManager:
         messages,
         mode: str,
         agent_config: AgentConfig | None = None,
+        response_schema: dict | None = None,
     ) -> str:
         try:
             from .agents.openai_client import generate_response as _generate_response
@@ -186,6 +188,7 @@ class SessionManager:
             stop_at_newline=options["stop_at_newline"],
             reasoning_effort=self._config.resolve_reasoning_effort(module),
             reasoning_summary=self._config.resolve_reasoning_summary(module),
+            response_schema=response_schema,
         )
 
     def _session_config(self, **overrides):
@@ -201,7 +204,7 @@ class SessionManager:
         meal_ingredient: str,
         meal_type: str = "meal",
         mode: str = "custom",
-        alignment_enabled: bool = True,
+        alignment_enabled: bool = False,
         coach_conversation_mode: Optional[str] = None,
         alignment_use_goal_def: Optional[bool] = None,
         alignment_use_workflow: Optional[bool] = None,
@@ -267,7 +270,6 @@ class SessionManager:
                 CertaintyEstimator(nutrition_goal=nutrition_goal, config=cfg)
                 if uncertainty_tracking else None
             ),
-            orchestrator=Orchestrator(nutrition_goal=nutrition_goal, config=cfg),
             meal_recommender=MealRecommender(nutrition_goal=nutrition_goal, config=cfg),
             guardrail=Guardrail(config=cfg),
             context_tracker=context_tracker,
@@ -342,14 +344,16 @@ class SessionManager:
             enable_opening_fallback=True,
             enable_guardrail=True,
             enable_context_tracking=session.context_tracking,
+            enable_alignment=session.alignment_enabled,
             enable_certainty=session.uncertainty_tracking,
         )
         engine = ConversationEngine(
-            generate_response=lambda *, module, messages, mode: self._run_module_inference(
+            generate_response=lambda *, module, messages, mode, response_schema=None: self._run_module_inference(
                 module=module,
                 messages=messages,
                 mode=mode,
                 agent_config=session.agent_config,
+                response_schema=response_schema,
             ),
             config=session.agent_config,
         )
@@ -360,6 +364,15 @@ class SessionManager:
         session.history.update_last_user_utterance(clean_reply)
 
         coach_messages = [m.content for m in result.assistant_messages if m.content]
+        coach_message_objects = [
+            {
+                "kind": m.kind,
+                "text": m.content,
+                "metadata": dict(m.metadata),
+            }
+            for m in result.assistant_messages
+            if m.content
+        ]
         coach_question = coach_messages[-1] if coach_messages else None
         next_turn = current_turn + 1
 
@@ -372,6 +385,7 @@ class SessionManager:
         session.history.update_meal_base(result.state.meal_base)
         session.history.update_tracker_state(result.state.tracker_state)
         session.history.update_context_base(result.state.context_base)
+        session.history.update_interaction_state(result.state.interaction_state)
 
         if coach_question:
             merged_coach = "\n\n".join(coach_messages)
@@ -382,12 +396,13 @@ class SessionManager:
                     turn_idx=next_turn,
                     coach_utterance=coach_question,
                     coach_messages=coach_messages,
+                    coach_message_objects=coach_message_objects,
                 )
             )
 
         if result.status == "terminated":
             session.status = SessionStatus.TERMINATED
-            session.terminated_by = result.terminated_by or "orchestrator"
+            session.terminated_by = result.terminated_by or "dialogue_planner"
         elif next_turn >= self._agent_config.max_turns:
             session.status = SessionStatus.MAX_TURNS
             session.terminated_by = "max_turns"
@@ -405,6 +420,7 @@ class SessionManager:
             "turn_idx": current_turn,
             "coach_question": coach_question,
             "coach_messages": coach_messages,
+            "coach_message_objects": coach_message_objects,
             "assessment_message": self._first_message_of_kind(result.assistant_messages, "assessment"),
             "user_reply": clean_reply,
             "status": session.status.value,
@@ -427,14 +443,17 @@ class SessionManager:
             "meal_tracker_output": metadata.get("meal_tracker_output"),
             "context_tracker_input": None,
             "context_tracker_output": metadata.get("context_tracker_output"),
+            "interaction_state": metadata.get("interaction_state"),
+            "interaction_tracker_output": metadata.get("interaction_tracker_output"),
             "certainty_input": None,
             "certainty_output": metadata.get("certainty_raw_output"),
-            "orchestrator_input": None,
-            "orchestrator_raw_output": metadata.get("orchestrator_raw_output"),
-            "orchestrator_decision": metadata.get("orchestrator_decision"),
+            "dialogue_planner_input": None,
+            "dialogue_planner_raw_output": metadata.get("dialogue_planner_raw_output"),
+            "dialogue_plan": metadata.get("dialogue_plan"),
             "recommendation_result": metadata.get("recommendation_result"),
             "assessment_result": metadata.get("assessment_result"),
             "post_assessment_decision": metadata.get("post_assessment_decision"),
+            "latency": metadata.get("latency"),
             "engine_metadata": metadata,
         }
         self._populate_turn_monitoring(session, response)
@@ -456,12 +475,31 @@ class SessionManager:
                 "phase": turn.phase,
                 "dialogue": {
                     "coach": turn.coach_utterance,
+                    "coach_messages": turn.coach_messages
+                    or ([turn.coach_utterance] if turn.coach_utterance else []),
+                    "coach_message_objects": turn.coach_message_objects
+                    or [
+                        {
+                            "kind": "reply",
+                            "text": text,
+                            "metadata": {},
+                        }
+                        for text in (
+                            turn.coach_messages
+                            or ([turn.coach_utterance] if turn.coach_utterance else [])
+                        )
+                    ],
                     "user": turn.user_utterance,
                 },
-                "orchestrator": {
-                    "action": turn.orchestrator_action,
-                    "reasoning": turn.orchestrator_reasoning,
-                    "instruction": turn.orchestrator_instruction,
+                "generated_response": {
+                    "metadata_applies_here": True,
+                    "coach_messages": turn.generated_coach_messages,
+                    "coach_message_objects": turn.generated_coach_message_objects,
+                },
+                "dialogue_planner": {
+                    "action": turn.planner_action,
+                    "reasoning": turn.planner_reasoning,
+                    "instruction": turn.planner_instruction,
                     "intent_summary": turn.intent_summary,
                     "user_intent": turn.user_intent,
                 },
@@ -473,6 +511,7 @@ class SessionManager:
                 "trackers": {
                     "meal_tracker": turn.meal_tracker_output,
                     "context_tracker": turn.context_tracker_output,
+                    "interaction_state": turn.interaction_state,
                 },
                 "alignment": {
                     "aligned": turn.alignment_aligned,
@@ -504,6 +543,7 @@ class SessionManager:
             "final_state": {
                 "meal_base": session.coaching_state.meal_base,
                 "context_base": session.coaching_state.context_base,
+                "interaction_state": session.coaching_state.interaction_state,
                 "final_aligned": session.final_aligned,
                 "final_score": session.final_score,
             },
@@ -562,17 +602,20 @@ class SessionManager:
         target.certainty_reasoning = result.get("certainty_reasoning")
         target.meal_tracker_output = result.get("meal_tracker_output")
         target.context_tracker_output = result.get("context_tracker_output")
+        target.interaction_state = result.get("interaction_state")
         target.recommendation_result = result.get("recommendation_result")
         target.assessment_result = result.get("assessment_result")
+        target.generated_coach_messages = result.get("coach_messages") or []
+        target.generated_coach_message_objects = result.get("coach_message_objects") or []
         target.guardrail_blocked = bool(result.get("guardrail_blocked", False))
         target.input_guard_passed = not target.guardrail_blocked if result.get("input_guard_output") else None
-        orch = result.get("orchestrator_decision")
-        if isinstance(orch, dict):
-            target.orchestrator_action = orch.get("action")
-            target.orchestrator_reasoning = orch.get("reasoning")
-            target.orchestrator_instruction = orch.get("instruction")
-            target.intent_summary = orch.get("intent_summary")
-            target.user_intent = orch.get("user_intent")
+        plan = result.get("dialogue_plan")
+        if isinstance(plan, dict):
+            target.planner_action = plan.get("action")
+            target.planner_reasoning = plan.get("reasoning")
+            target.planner_instruction = plan.get("instruction")
+            target.intent_summary = plan.get("intent_summary")
+            target.user_intent = plan.get("user_intent")
 
 
 def _alignment_label(aligned: Optional[bool]) -> str:

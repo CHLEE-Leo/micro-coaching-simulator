@@ -77,7 +77,7 @@ class CertaintyEstimator:
         try:
             data = load_json_object(raw_output)
             reasoning = str(data.get("reasoning", ""))
-            raw_score = float(data.get("certainty_score", 0.0))
+            raw_score = float(data.get("certainty_score", data.get("score", 0.0)))
             score = max(0.0, min(1.0, raw_score))  # clamp to [0, 1]
         except (JSONOutputError, ValueError, TypeError):
             fallback = self.last_score if self.last_score is not None else 0.0

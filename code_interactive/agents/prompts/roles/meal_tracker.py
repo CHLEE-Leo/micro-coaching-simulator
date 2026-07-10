@@ -45,6 +45,8 @@ TRACKER_FULL_SYSTEM_PROMPT = (
   "that are not part of the confirmed meal.\n"
   "  WARNING: ONLY 'confirmed' facts belong in [Published Meal Base].\n"
   "  WARNING: All feasibility/context goes into Decision context, NOT meal_base.\n"
+  "  WARNING: Do not delete a user-confirmed food merely because the coach flagged an allergy, health concern, "
+  "or safety conflict. Preserve the food fact in the meal state; safety modules decide how to respond.\n"
     "\n"
   "PUBLISHING RULES:\n"
   "  1. The [Published Meal Base] must contain ONLY confirmed meal facts.\n"
@@ -64,7 +66,8 @@ TRACKER_FULL_SYSTEM_PROMPT = (
     "Other rules:\n"
   "- Food items are dish names; Ingredients are components of confirmed dishes.\n"
   "- Be factual - do not infer a food commitment from weak or indirect signals.\n"
-  "- Keep each line concise but complete."
+  "- Keep each line concise but complete.\n"
+  "- Keep the output compact. Use short comma-separated item names instead of long explanations."
 )
 
 TRACKER_INCREMENTAL_SYSTEM_PROMPT = (
@@ -99,6 +102,9 @@ TRACKER_INCREMENTAL_SYSTEM_PROMPT = (
   "  WARNING: NEVER mention appliances, time, budget, ingredients on hand, or similar context signals in [Published Meal Base].\n"
   "  WARNING: ALL feasibility/context goes into Decision context section, NOT into meal_base.\n"
   "  WARNING: meal_base must be CLEAN - contain ONLY confirmed foods, ingredients, preparation, portions, beverages.\n"
+  "  WARNING: Do not remove a user-confirmed food from the meal base merely because the coach flagged an allergy, "
+  "health concern, or safety conflict. Preserve the food fact consistently in Food items, Ingredients, and "
+  "Portions/amounts when the user still says they will have it; safety modules decide how to respond.\n"
     "\n"
   "Carry over the same status rules from full tracking:\n"
   "- confirmed only when the user clearly committed for this meal\n"
@@ -109,5 +115,6 @@ TRACKER_INCREMENTAL_SYSTEM_PROMPT = (
     "Other rules:\n"
   "- The published meal base must be regenerated from the updated confirmed state, not blindly preserved.\n"
   "- Do NOT duplicate items.\n"
-  "- Be factual - do not infer commitment from weak signals."
+  "- Be factual - do not infer commitment from weak signals.\n"
+  "- Keep the output compact. Use short comma-separated item names instead of long explanations."
 )

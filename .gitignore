@@ -5,31 +5,69 @@
 # *.bak\nvllm_server.log
 
 __pycache__
+.agents/
 .claude/
 .github/
+.pytest_cache/
 .venv/
 .vscode/
 analysis/
 Bloom/
 chats/
 code/
-code_interactive/agents/data/*
+code_interactive_v2/
 data/
-!code_interactive/agents/data/
+else/
+metrics/
+tests/__pycache__/
+tests/*.pyc
+tests/.codex
+tests/**/__pycache__/
+tests/**/*.pyc
+
+code_interactive/agents/data/*
 !code_interactive/agents/data/additional/
+
 code_interactive/agents/data/additional/*
 !code_interactive/agents/data/additional/goal_def_v2.json
 !code_interactive/agents/data/additional/expert_workflow.json
 !code_interactive/agents/data/additional/output_format_inst_binary.txt
 !code_interactive/agents/data/additional/output_format_inst_0-1.txt
 !code_interactive/agents/data/additional/output_format_inst_0-100.txt
-docs/
+
+
+code_interactive/docs/
+code_interactive/user_model/
+code_interactive/assets/
+!code_interactive/README.md
+
 .codex
 .env
 AGENTS.md
 README(eng).md
 README.md
-code_interactive/README.md
+
 # # Keep research analysis artifacts tracked.
 # !analysis/
 # !analysis/**
+
+
+# Keep implementation-facing notes, framework figures, and shared unit tests
+# trackable so code patches remain reproducible and reviewable.
+# !code_interactive/docs/
+# code_interactive/docs/**
+# !code_interactive/docs/technical_notes.md
+# !code_interactive/docs/workflow_design.md
+# !code_interactive/docs/research_notes.md
+# !code_interactive/docs/scenario_tests.md
+# !code_interactive/docs/patch.md
+# !code_interactive/user_model/
+# !code_interactive/user_model/**
+# !code_interactive/assets/
+# code_interactive/assets/**
+# !code_interactive/assets/render_framework.py
+# !code_interactive/assets/framework.png
+# !tests/
+# !tests/closed_loop_probe.py
+# !tests/unit/
+# !tests/unit/**

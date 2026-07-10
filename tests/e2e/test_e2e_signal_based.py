@@ -113,7 +113,7 @@ def test_s1_happy_path():
         align = t.get("alignment_score")
         cert = t.get("certainty_score")
         mon = t.get("monitoring", {})
-        action = mon.get("orchestrator_action", "")
+        action = mon.get("planner_action", "")
         phase = mon.get("current_phase", "")
         history.append({
             "turn": i + 1, "user": text[:60], "coach": coach[:80],
@@ -159,7 +159,7 @@ def test_s1_happy_path():
             status = t.get("status", "")
             align = t.get("alignment_score")
             mon = t.get("monitoring", {})
-            action = mon.get("orchestrator_action", "")
+            action = mon.get("planner_action", "")
             print(f"  T{len(history)+j+1}: '{extra_texts[j][:40]}' → action={action}, align={align}, status={status}")
             if status != "active":
                 last_status = status
@@ -285,7 +285,7 @@ def test_s3_incomplete_meal_no_premature_close():
     status3 = t3.get("status", "")
     align3 = t3.get("alignment_score")
     m3 = t3.get("monitoring", {})
-    action3 = m3.get("orchestrator_action", "")
+    action3 = m3.get("planner_action", "")
     print(f"  T3: action={action3}, status={status3}, align={align3}")
 
     # Key check: with only a small salad for dinner, alignment should be low
@@ -348,7 +348,7 @@ def test_s4_vague_responder():
         t = send_turn(sid, text)
         last_status = t.get("status", "")
         m = t.get("monitoring", {})
-        action = m.get("orchestrator_action", "")
+        action = m.get("planner_action", "")
         align = t.get("alignment_score")
         cert = t.get("certainty_score")
         print(f"  T{i+1}: '{text[:40]}' → action={action}, status={last_status}, align={align}, cert={cert}")
@@ -400,7 +400,7 @@ def test_s5_already_aligned():
     cert2 = t2.get("certainty_score")
     status2 = t2.get("status", "")
     m2 = t2.get("monitoring", {})
-    action2 = m2.get("orchestrator_action", "")
+    action2 = m2.get("planner_action", "")
     print(f"  T2: action={action2}, align={align2}, cert={cert2}, status={status2}")
 
     # High alignment → should either terminate or move quickly to motivational close
@@ -414,7 +414,7 @@ def test_s5_already_aligned():
         t3 = send_turn(sid, "That's all, nothing else to add.")
         status3 = t3.get("status", "")
         m3 = t3.get("monitoring", {})
-        action3 = m3.get("orchestrator_action", "")
+        action3 = m3.get("planner_action", "")
         print(f"  T3: action={action3}, status={status3}")
         total_turns = 3
 
@@ -534,7 +534,7 @@ def test_edge_accept_then_question():
     t5 = send_turn(sid, "Sure I'll try that! But should I do a 1:1 ratio?")
     status5 = t5.get("status", "")
     m5 = t5.get("monitoring", {})
-    action5 = m5.get("orchestrator_action", "")
+    action5 = m5.get("planner_action", "")
     print(f"  Accept+Q: action={action5}, status={status5}")
 
     # Should NOT terminate — user asked a question

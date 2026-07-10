@@ -948,7 +948,7 @@ textarea { resize: none; line-height: 1.5; }
   padding: 4px 0;
 }
 
-/* ── Monitor: Orchestrator info rows ─────────────────────────── */
+/* ── Monitor: Dialogue Planner info rows ─────────────────────── */
 .monitor-info-block {
   display: flex;
   flex-direction: column;
@@ -979,11 +979,11 @@ textarea { resize: none; line-height: 1.5; }
   word-break: break-word;
 }
 
-.orchestrator-card {
+.planner-card {
   border: 1px solid #d9efe4;
 }
 
-/* ── Orchestrator: intent quote block ─── */
+/* ── Dialogue Planner: intent quote block ─── */
 .orch-intent {
   margin: 4px 0 2px;
 }
@@ -1005,7 +1005,7 @@ textarea { resize: none; line-height: 1.5; }
   border-radius: 0 8px 8px 0;
 }
 
-/* ── Structured info block (Orchestrator / Context Tracker) ─── */
+/* ── Structured info block (Dialogue Planner / Context Tracker) ─── */
 .monitor-structured-block {
   display: flex;
   flex-direction: column;

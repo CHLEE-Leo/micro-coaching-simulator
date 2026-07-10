@@ -120,10 +120,10 @@ def test_g1_rejection_graceful_exit():
     for i, text in enumerate(info_turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         phase = t.get("phase", "")
-        user_intent = orch_dec.get("user_intent", "") if orch_dec else ""
+        user_intent = plan_dec.get("user_intent", "") if plan_dec else ""
         print(f"    T{i+1}: user='{text[:50]}' | action={action} | phase={phase} | intent={user_intent}")
         history.append({"turn": i+1, "status": status, "action": action, "phase": phase})
         if status in ("terminated", "max_turns"):
@@ -143,10 +143,10 @@ def test_g1_rejection_graceful_exit():
             t = send_turn(sid, text)
             status = t.get("status", "")
             mon = t.get("monitoring", {})
-            action = orch_dec.get("action", "")
+            action = plan_dec.get("action", "")
             phase = t.get("phase", "")
-            orch_dec = t.get("orchestrator_decision") or {}
-            user_intent = orch_dec.get("user_intent", "") if orch_dec else ""
+            plan_dec = t.get("dialogue_plan") or {}
+            user_intent = plan_dec.get("user_intent", "") if plan_dec else ""
             align = t.get("alignment_score")
             turn_num = len(info_turns) + i + 1
             print(f"    T{turn_num}: user='{text[:50]}' | action={action} | phase={phase} | intent={user_intent} | align={align}")
@@ -171,10 +171,10 @@ def test_g1_rejection_graceful_exit():
             t = send_turn(sid, text)
             status = t.get("status", "")
             mon = t.get("monitoring", {})
-            action = orch_dec.get("action", "")
+            action = plan_dec.get("action", "")
             phase = t.get("phase", "")
-            orch_dec = t.get("orchestrator_decision") or {}
-            user_intent = orch_dec.get("user_intent", "") if orch_dec else ""
+            plan_dec = t.get("dialogue_plan") or {}
+            user_intent = plan_dec.get("user_intent", "") if plan_dec else ""
             turn_num = len(info_turns) + len(rejection_turns) + i + 1
             print(f"    T{turn_num}: user='{text[:50]}' | action={action} | phase={phase} | intent={user_intent}")
             history.append({
@@ -257,9 +257,9 @@ def test_g2_acceptance_resets_rejection():
     for i, text in enumerate(turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
-        user_intent = orch_dec.get("user_intent", "") if orch_dec else ""
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
+        user_intent = plan_dec.get("user_intent", "") if plan_dec else ""
         print(f"    T{i+1}: action={action} | intent={user_intent}")
         history.append({"turn": i+1, "action": action, "intent": user_intent, "status": status})
         if status in ("terminated", "max_turns"):
@@ -276,9 +276,9 @@ def test_g2_acceptance_resets_rejection():
         for i, (text, expected_intent) in enumerate(negotiation_turns):
             t = send_turn(sid, text)
             status = t.get("status", "")
-            orch_dec = t.get("orchestrator_decision") or {}
-            action = orch_dec.get("action", "")
-            user_intent = orch_dec.get("user_intent", "")
+            plan_dec = t.get("dialogue_plan") or {}
+            action = plan_dec.get("action", "")
+            user_intent = plan_dec.get("user_intent", "")
             turn_num = len(turns) + i + 1
             print(f"    T{turn_num}: user='{text[:50]}' | action={action} | intent={user_intent}")
             history.append({"turn": turn_num, "action": action, "intent": user_intent, "status": status})
@@ -299,9 +299,9 @@ def test_g2_acceptance_resets_rejection():
         for i, text in enumerate(followup_turns):
             t = send_turn(sid, text)
             status = t.get("status", "")
-            orch_dec = t.get("orchestrator_decision") or {}
-            action = orch_dec.get("action", "")
-            user_intent = orch_dec.get("user_intent", "")
+            plan_dec = t.get("dialogue_plan") or {}
+            action = plan_dec.get("action", "")
+            user_intent = plan_dec.get("user_intent", "")
             turn_num = len(turns) + len(negotiation_turns) + i + 1
             print(f"    T{turn_num}: action={action} | intent={user_intent}")
             history.append({"turn": turn_num, "action": action, "intent": user_intent, "status": status})
@@ -381,8 +381,8 @@ def test_g3_assessment_cross_validation():
     for i, text in enumerate(turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         phase = t.get("phase", "")
         align = t.get("alignment_score")
         print(f"    T{i+1}: action={action} | phase={phase} | align={align} | status={status}")
@@ -451,10 +451,10 @@ def test_g4_certainty_info_sufficiency():
     for i, text in enumerate(turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
+        plan_dec = t.get("dialogue_plan") or {}
         align = t.get("alignment_score")
         cert = t.get("certainty_score")
-        action = orch_dec.get("action", "")
+        action = plan_dec.get("action", "")
         print(f"    T{i+1}: align={align} | cert={cert} | action={action} | status={status}")
         history.append({
             "turn": i+1, "align": align, "cert": cert,
@@ -528,8 +528,8 @@ def test_g5_happy_path_regression():
     for i, text in enumerate(turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         print(f"    T{i+1}: action={action} | status={status}")
         history.append({"turn": i+1, "action": action, "status": status})
         if status in ("terminated", "max_turns"):
@@ -594,8 +594,8 @@ def test_g6_user_intent_structural_output():
         t = send_turn(sid, text)
         status = t.get("status", "")
         mon = t.get("monitoring", {})
-        orch_dec = t.get("orchestrator_decision") or {}
-        user_intent = orch_dec.get("user_intent", "") if orch_dec else ""
+        plan_dec = t.get("dialogue_plan") or {}
+        user_intent = plan_dec.get("user_intent", "") if plan_dec else ""
         print(f"    '{text[:40]}' → intent={user_intent}")
         intents_collected.append(user_intent)
         if status in ("terminated", "max_turns"):

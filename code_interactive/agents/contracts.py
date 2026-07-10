@@ -57,6 +57,7 @@ class CoachingState:
     meal_base: str = ""
     tracker_state: str = ""
     context_base: str = ""
+    interaction_state: str = ""
     user_preferences: str = ""
     recommendation_history: Sequence[Mapping[str, Any]] = ()
     consecutive_qa_count: int = 0
@@ -68,6 +69,7 @@ class CoachingState:
     last_alignment_reasoning: str | None = None
     last_certainty_score: float | None = None
     last_certainty_reasoning: str | None = None
+    safety_clarification_counts: Mapping[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,7 @@ class CoachingTurnRequest:
     enable_opening_fallback: bool = True
     enable_guardrail: bool = True
     enable_context_tracking: bool = True
+    enable_alignment: bool = False
     enable_certainty: bool = False
 
 

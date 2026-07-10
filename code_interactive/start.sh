@@ -33,7 +33,7 @@ echo "  Micro-Coaching Simulator  |  Interactive Mode"
 echo "---------------------------------------------------"
 echo "  Port  : $PORT"
 echo "  URL   : http://localhost:$PORT"
-echo "  LLM   : ChatGPT (gpt-5.2)"
+echo "  LLM   : ChatGPT (gpt-5.4)"
 if [ -n "$RELOAD_FLAG" ]; then
 echo "  Mode  : DEV (hot-reload ON)"
 else

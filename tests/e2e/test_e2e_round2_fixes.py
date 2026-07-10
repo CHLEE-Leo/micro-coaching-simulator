@@ -61,7 +61,7 @@ def send_turn(sid, text):
     except requests.exceptions.HTTPError as e:
         # 409 = session already terminated
         if e.response is not None and e.response.status_code == 409:
-            return {"status": "terminated", "orchestrator_decision": {}}
+            return {"status": "terminated", "dialogue_plan": {}}
         raise
 
 
@@ -131,8 +131,8 @@ def test_r1_underestimate_correction():
         t = send_turn(sid, text)
         status = t.get("status", "")
         align = t.get("alignment_score")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         if align is not None:
             alignment_scores.append(align)
         print(f"    T{i+1}: action={action} | align={align} | status={status}")
@@ -207,9 +207,9 @@ def test_r2_early_phase_rejection():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
-        intent = orch_dec.get("user_intent", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
+        intent = plan_dec.get("user_intent", "")
         phase = t.get("phase", "")
         if intent == "rejecting":
             rejection_intents += 1
@@ -277,9 +277,9 @@ def test_r3_graceful_exit_tone():
         status = t.get("status", "")
         # API returns coach_question for the coach's response text
         coach_text = t.get("coach_question", "") or ""
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
-        intent = orch_dec.get("user_intent", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
+        intent = plan_dec.get("user_intent", "")
         if coach_text:
             coach_messages.append(coach_text)
         print(f"    T{i+1}: intent={intent} | action={action} | status={status}")
@@ -349,9 +349,9 @@ def test_r4_allergy_as_informing():
     for i, text in enumerate(turns):
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
-        intent = orch_dec.get("user_intent", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
+        intent = plan_dec.get("user_intent", "")
         phase = t.get("phase", "")
         print(f"    T{i+1}: user='{text[:50]}' | intent={intent} | action={action} | phase={phase}")
         if i == 2:  # allergy turn
@@ -384,8 +384,8 @@ def test_r4_allergy_as_informing():
             t = send_turn(sid, text)
             status = t.get("status", "")
             coach_response = t.get("coach_response", "") or t.get("response", "")
-            orch_dec = t.get("orchestrator_decision") or {}
-            action = orch_dec.get("action", "")
+            plan_dec = t.get("dialogue_plan") or {}
+            action = plan_dec.get("action", "")
             print(f"    T{len(history)+i+1}: action={action} | coach='{(coach_response or '')[:60]}'")
             if coach_response:
                 coach_recs.append(coach_response.lower())
@@ -448,9 +448,9 @@ def test_r5_allergy_then_rejection():
             break
         t = send_turn(sid, text)
         status = t.get("status", "")
-        orch_dec = t.get("orchestrator_decision") or {}
-        intent = orch_dec.get("user_intent", "")
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        intent = plan_dec.get("user_intent", "")
+        action = plan_dec.get("action", "")
         intents.append(intent)
         print(f"    T{i+1}: expected={expected} | actual={intent} | action={action} | status={status}")
         if status in ("terminated", "max_turns"):
@@ -513,8 +513,8 @@ def test_r6_no_override_on_normal_path():
         t = send_turn(sid, text)
         status = t.get("status", "")
         align = t.get("alignment_score")
-        orch_dec = t.get("orchestrator_decision") or {}
-        action = orch_dec.get("action", "")
+        plan_dec = t.get("dialogue_plan") or {}
+        action = plan_dec.get("action", "")
         if align is not None:
             alignment_scores.append(align)
         print(f"    T{i+1}: action={action} | align={align} | status={status}")

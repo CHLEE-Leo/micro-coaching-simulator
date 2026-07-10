@@ -48,8 +48,8 @@ commitment should be treated as unconfirmed.
 3. Assess: for the CONFIRMED items only, do we know enough (food items, ingredients, \
 preparation, portions) to judge goal alignment?
 
-Output ONLY a JSON object with exactly two fields:
-- "reasoning": a brief (2-4 sentences) explanation of what is known vs unknown.
+Output ONLY a compact JSON object with exactly two fields:
+- "reasoning": one short sentence about the critical known/unknown meal facts.
 - "certainty_score": a float between 0.0 and 1.0 where:
     0.0 = no useful information gathered yet
     0.5 = some details known but critical gaps remain (cannot judge either way)
@@ -57,7 +57,7 @@ Output ONLY a JSON object with exactly two fields:
     1.0 = complete picture, nothing more to ask
 
 Example output:
-{{"reasoning": "The user mentioned a large pepperoni pizza with extra cheese. We know the dish, its main ingredients, and approximate portion. A nutritionist could confidently determine this does NOT align with a lean protein goal. No additional details would change this judgment.", "certainty_score": 0.90}}
+{{"reasoning":"Dish, main ingredients, and portion are known enough to judge alignment.","certainty_score":0.90}}
 
 Rules:
 - Base your assessment ONLY on information the USER explicitly stated or confirmed.
@@ -76,6 +76,5 @@ latest conversation turn caused the score to increase, decrease, or stay the sam
 CERTAINTY_INPUT_TEMPLATE = Template("""\
 ${transcript}
 ${prev_score_context}
-Based on the conversation and extracted meal information above, estimate the certainty score \
-for meal-goal alignment assessment.\
+Estimate meal-information certainty. Return compact JSON only.\
 """)

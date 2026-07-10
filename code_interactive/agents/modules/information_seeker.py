@@ -9,6 +9,7 @@ from ..memory.conversation_memory import ConversationBuffer, SharedConversationH
 from ..prompts.roles.information_seeker import (
     INFORMATION_SEEKER_ACTION_GUIDELINES,
     INFORMATION_SEEKER_DEAD_END_BLOCK,
+    INFORMATION_SEEKER_INTERACTION_STATE_BLOCK,
     INFORMATION_SEEKER_NATURAL_CLOSE_BLOCK,
     INFORMATION_SEEKER_PHASE_BLOCK,
     INFORMATION_SEEKER_PROFILE_BLOCK,
@@ -105,6 +106,7 @@ class InformationSeeker:
         natural_close: bool = False,
         phase: str = "",
         user_preferences: str = "",
+        interaction_state: str = "",
         instruction: str = "",
         **_ignored_options,
     ) -> List[Dict[str, str]]:
@@ -118,6 +120,7 @@ class InformationSeeker:
             natural_close=natural_close,
             phase=phase,
             user_preferences=user_preferences,
+            interaction_state=interaction_state or shared_history.interaction_state,
             instruction=instruction,
         )
         return shared_history.build_messages(
@@ -131,6 +134,7 @@ class InformationSeeker:
         dead_end_topics: List[str] | None = None,
         phase: str = "",
         user_preferences: str = "",
+        interaction_state: str = "",
         instruction: str = "",
         **_ignored_options,
     ) -> Dict:
@@ -140,6 +144,7 @@ class InformationSeeker:
             dead_end_topics=dead_end_topics,
             phase=phase,
             user_preferences=user_preferences,
+            interaction_state=interaction_state,
             instruction=instruction,
         )
 
@@ -224,6 +229,7 @@ class InformationSeeker:
         natural_close: bool = False,
         phase: str = "",
         user_preferences: str = "",
+        interaction_state: str = "",
         instruction: str = "",
     ) -> str:
         """_build_system_prompt helper for the portable micro-coaching agent package."""
@@ -240,6 +246,11 @@ class InformationSeeker:
         # Principle 4
         if dialog_summary:
             parts.append(INFORMATION_SEEKER_SUMMARY_BLOCK.format(dialog_summary=dialog_summary))
+
+        if interaction_state:
+            parts.append(INFORMATION_SEEKER_INTERACTION_STATE_BLOCK.format(
+                interaction_state=interaction_state,
+            ))
 
         # Principle 2
         if prev_questions:

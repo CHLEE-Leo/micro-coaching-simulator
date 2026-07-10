@@ -72,11 +72,11 @@ class Guardrail:
 
     # -- Output Guard ------------------------------------------------------
 
-    def get_output_guard_messages(self, orchestrator_response: str) -> List[Dict[str, str]]:
+    def get_output_guard_messages(self, assistant_response: str) -> List[Dict[str, str]]:
         """get_output_guard_messages helper for the portable micro-coaching agent package."""
         return [
             {"role": "system", "content": OUTPUT_GUARD_SYSTEM_PROMPT},
-            {"role": "user",   "content": orchestrator_response},
+            {"role": "user",   "content": assistant_response},
         ]
 
     def parse_output_guard(self, raw_output: str) -> Dict:

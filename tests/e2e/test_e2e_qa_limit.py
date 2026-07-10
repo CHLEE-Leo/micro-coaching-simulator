@@ -25,7 +25,7 @@ def _delete(path: str) -> None:
 
 
 def test_repeated_user_questions_do_not_trigger_unbounded_respond_loop():
-    """The orchestrator may answer questions, but should resume coaching after two."""
+    """The dialogue planner may answer questions, but should resume coaching after two."""
 
     session = _post(
         "/api/session/start",
@@ -54,7 +54,7 @@ def test_repeated_user_questions_do_not_trigger_unbounded_respond_loop():
     try:
         for text in user_turns:
             result = _post(f"/api/session/{sid}/turn", {"user_reply": text})
-            decision = result.get("orchestrator_decision") or {}
+            decision = result.get("dialogue_plan") or {}
             action = decision.get("action") or ""
             if action:
                 actions.append(action)
@@ -73,4 +73,3 @@ def test_repeated_user_questions_do_not_trigger_unbounded_respond_loop():
             current_streak = 0
 
     assert max_respond_streak <= 2, f"actions={actions}"
-

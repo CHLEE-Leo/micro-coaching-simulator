@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-_ROOT = Path(__file__).resolve().parents[3]
+_ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
@@ -15,6 +15,7 @@ from code_interactive.agents.agent_config import AgentConfig
 from code_interactive.agents.memory.conversation_memory import SharedConversationHistory
 from code_interactive.agents.modules.information_seeker import InformationSeeker
 import code_interactive.agents.modules.meal_tracker as meal_tracker_module
+from code_interactive.agents.modules.meal_assessor import MealAssessor
 from code_interactive.agents.modules.meal_tracker import MealTrackerModel
 
 
@@ -159,6 +160,47 @@ def test_tracking_state_can_keep_tentative_food_out_of_alignment_context():
     assert "tomato soup" in history.tracker_state
     assert "microwave available" in history.tracker_state
     assert "tomato soup" not in history.to_alignment_context()
+
+
+def test_assessment_prompt_uses_current_meal_evidence_beyond_published_base():
+    history = SharedConversationHistory(context_window=5)
+    history.add_turn(0, "What are you thinking of having?", "I'm trying jajangmian and egg-fried rice.")
+    history.update_meal_base(
+        "- Food items: not yet mentioned\n"
+        "- Ingredients: not yet mentioned\n"
+        "- Preparation methods: not yet mentioned"
+    )
+    history.update_tracker_state(
+        "[Tracking State]\n"
+        "- Confirmed food items: none\n"
+        "- Tentative food items: jajangmian, egg-fried rice\n"
+        "- Rejected food items: none\n"
+        "- Decision context: user is considering dinner"
+    )
+    history.update_context_base(
+        "[Personal Context]\nThe user has an egg allergy and diabetes/prediabetes."
+    )
+    history.update_interaction_state(
+        "Candidate options:\n- jajangmian\n- egg-fried rice\n"
+        "Known profile constraints:\n- Allergy constraint: Eggs"
+    )
+
+    assessor = MealAssessor("lean_protein", _config())
+    messages = assessor.get_messages(
+        history=history,
+        user_preferences="Allergies: Eggs\nHealth Concerns: Diabetes / Prediabetes",
+        recommendation_history=[
+            {"turn_idx": 1, "suggestion": "use lean turkey", "target_food": "jajang sauce"}
+        ],
+    )
+    user_content = messages[1]["content"]
+    system_content = messages[0]["content"]
+
+    assert "Food items: not yet mentioned" in user_content
+    assert "Tentative food items: jajangmian, egg-fried rice" in user_content
+    assert "Candidate options:" in user_content
+    assert "Allergies: Eggs" in user_content
+    assert "Do NOT say no meal items were provided" in system_content
 
 
 @pytest.mark.parametrize(

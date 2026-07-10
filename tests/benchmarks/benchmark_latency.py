@@ -8,11 +8,19 @@ submit_reply() 내부의 각 LLM 호출 단계별 소요 시간을 측정합니�
 / Latency benchmark for the LLM pipeline.
 Measures wall-clock time of each LLM call stage inside submit_reply().
 """
+import os
 import sys, time, functools
 from pathlib import Path
 
 # ── 경로 설정
-_INTERACTIVE = Path(__file__).resolve().parents[2]
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_PACKAGE = os.environ.get("INTERACTIVE_TEST_PACKAGE", "code_interactive").strip()
+if _PACKAGE not in {"code_interactive", "code_interactive_v2"}:
+    raise RuntimeError(
+        "INTERACTIVE_TEST_PACKAGE must be 'code_interactive' or "
+        f"'code_interactive_v2', got {_PACKAGE!r}."
+    )
+_INTERACTIVE = _REPO_ROOT / _PACKAGE
 sys.path.insert(0, str(_INTERACTIVE))
 
 # ── Monkey-patch: SessionManager._run_module_inference 에 타이밍 래퍼 주입
@@ -82,7 +90,7 @@ def run_benchmark():
         result = mgr.submit_reply(sid, reply)
         t_total = (time.perf_counter() - t_start) * 1000
 
-        action = (result.get("orchestrator_decision") or {}).get("action", "?")
+        action = (result.get("dialogue_plan") or {}).get("action", "?")
         phase = result.get("phase", "?")
         status = result.get("status", "?")
 
@@ -129,7 +137,7 @@ def run_benchmark():
         result = mgr.submit_reply(sid2, reply)
         t_total = (time.perf_counter() - t_start) * 1000
 
-        action = (result.get("orchestrator_decision") or {}).get("action", "?")
+        action = (result.get("dialogue_plan") or {}).get("action", "?")
         phase = result.get("phase", "?")
         status = result.get("status", "?")
 
@@ -158,15 +166,16 @@ def run_benchmark():
     print("=" * 70)
     print("""
   Current serial chain (inquire path):
-    [Input Guard + MT + CT] -> [AE] -> [CE optional] -> [Phase Predictor] -> [Orchestrator] -> [IS] -> [Response Generator]
-     light group          light    light      heavy/med          heavy/high      heavy/med  heavy/none
+    [Input Guard + MT + CT + IS] -> [AE optional] -> [CE optional] -> [Dialogue Planner] -> [Response Generator]
+     tracking group              light          light            heavy/none       heavy/none
 
-  The input guard, meal tracker, and context tracker are launched together.
+  The input guard, meal tracker, context tracker, and interaction tracker are
+  launched together.
 
-  assess path adds: +Assessment +Assessment Response +Post Assessment Routing +(action)
+  assess path adds: +MealAssessor +Assessment Response +(planned follow-up action)
 
   Key observation:
-    - Orchestrator (heavy, reasoning=high) is usually the largest bottleneck.
+    - Dialogue Planner is the main control bottleneck.
     - InformationSeeker/MealRecommender (heavy, reasoning=medium) often follow.
     - ResponseGenerator (heavy, reasoning=none) is still user-visible latency.
     - Light modules are individually fast but still add up across a full turn.

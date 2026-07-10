@@ -34,6 +34,13 @@ Guidelines:
 - Focus on genuinely useful missing information.
 - Never repeat a question already asked.
 - If the user previously said they are unsure about a topic, move on.
+- Do not ask about targets listed as rejected or unavailable in interaction
+  state. This includes asking whether those options exist, whether the user can
+  get them, or whether the user will reconsider them.
+- If interaction state contains accepted or available options, ask within that
+  constrained set rather than reopening unavailable directions.
+- If the router instruction conflicts with rejected, unavailable, or accepted
+  interaction-state evidence, follow the interaction-state evidence.
 - Do not force a meal-detail question or a preference question just because of the
   phase name; infer the best question from the whole dialogue.
 
@@ -54,6 +61,12 @@ INFORMATION_SEEKER_SUMMARY_BLOCK = """\
 
 [Dialog summary so far]
 {dialog_summary}
+"""
+
+INFORMATION_SEEKER_INTERACTION_STATE_BLOCK = """\
+
+[Interaction State - use this to avoid redundant or infeasible questions]
+{interaction_state}
 """
 
 INFORMATION_SEEKER_PROFILE_BLOCK = """\

@@ -19,19 +19,20 @@ def build_state_merge(
     """Return bridge guidance for whichever dialogue state blocks are enabled."""
     if include_scores and include_rationales:
         return (
-            "Use the dialogue state scores and rationales together when choosing "
-            "the next action. Scores provide coarse thresholds; rationales explain "
-            "why those scores were produced."
+            "When dialogue state scores and rationales are provided, use them "
+            "together when choosing the next action. Scores provide coarse "
+            "thresholds; rationales explain why those scores were produced."
         )
     if include_scores:
         return (
-            "Use the dialogue state scores when choosing the next action. "
-            "Apply the score thresholds as guidance."
+            "When dialogue state scores are provided, use them when choosing "
+            "the next action. Apply the score thresholds as guidance."
         )
     if include_rationales:
         return (
-            "Use the dialogue state rationales when choosing the next action. "
-            "They explain what is known, missing, strong, or weak in the meal."
+            "When dialogue state rationales are provided, use them when "
+            "choosing the next action. They explain what is known, missing, "
+            "strong, or weak in the meal."
         )
     return ""
 

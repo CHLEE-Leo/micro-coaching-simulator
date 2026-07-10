@@ -27,12 +27,10 @@ class AgentConfig:
 
     # Prompt ablation flags
     coach_use_template_guidance: bool = True
-    use_phase_predictor: bool = True
-    phase_predictor_use_state_scores: bool = True
-    phase_predictor_use_state_rationales: bool = True
-    orchestrator_use_intents: bool = True
-    orchestrator_use_state_scores: bool = True
-    orchestrator_use_state_rationales: bool = True
+    use_interaction_tracker: bool = True
+    dialogue_planner_use_intents: bool = True
+    dialogue_planner_use_state_scores: bool = True
+    dialogue_planner_use_state_rationales: bool = True
 
     # Default text-generation options
     max_new_tokens: int = 150
@@ -53,12 +51,13 @@ class AgentConfig:
     context_window: int = 10
     meal_track_every: int = 1
     summarize_every: int = 1
-    summarize_max_new_tokens: int = 250 # LLM
-    certainty_max_new_tokens: int = 400
+    summarize_max_new_tokens: int = 600 # LLM
+    certainty_max_new_tokens: int = 220
 
     # Structured-output modules
-    recommendation_max_new_tokens: int = 500
-    orchestrator_max_new_tokens: int = 500
+    recommendation_max_new_tokens: int = 900
+    planner_max_new_tokens: int = 260
+    response_generator_max_new_tokens: int = 500
     guardrail_max_new_tokens: int = 200
     assessment_max_new_tokens: int = 500
 
@@ -86,9 +85,15 @@ class AgentConfig:
                 "sampling": "greedy",
                 "stop_at_newline": False,
             }
-        if mode == "orchestrator":
+        if mode == "planner":
             return {
-                "max_new_tokens": self.orchestrator_max_new_tokens,
+                "max_new_tokens": self.planner_max_new_tokens,
+                "sampling": "greedy",
+                "stop_at_newline": False,
+            }
+        if mode == "response_generator":
+            return {
+                "max_new_tokens": self.response_generator_max_new_tokens,
                 "sampling": "greedy",
                 "stop_at_newline": False,
             }

@@ -23,9 +23,10 @@ LLM 백엔드: ChatGPT (OpenAI API) 전용.
 from __future__ import annotations
 
 import logging
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import uvicorn
 from dotenv import load_dotenv
@@ -60,6 +61,40 @@ logger = logging.getLogger("micro-coach-interactive")
 
 _config:          Optional[WebAppConfig] = None
 _session_manager: Optional[SessionManager]   = None
+
+
+async def _iter_turn_sse_events(result: dict[str, Any]):
+    """Yield SSE events for one processed turn.
+
+    Keeping this separate from the FastAPI route makes the multi-bubble
+    streaming contract testable without starting the full server or OpenAI
+    client stack.
+    """
+    is_blocked = result.get("guardrail_blocked", False)
+    coach_text = "" if is_blocked else (result.pop("coach_question", "") or "")
+    if not is_blocked:
+        result.pop("assessment_message", None)
+    coach_messages = [] if is_blocked else result.pop("coach_messages", [])
+
+    yield f"event: meta\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
+
+    if len(coach_messages) > 1:
+        yield f"event: assessment\ndata: {json.dumps(coach_messages[0], ensure_ascii=False)}\n\n"
+        for msg in coach_messages[1:]:
+            yield 'event: bubble_start\ndata: ""\n\n'
+            words = msg.split(" ")
+            for i, word in enumerate(words):
+                chunk = word if i == 0 else " " + word
+                yield f"event: token\ndata: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.03)
+    elif coach_text:
+        words = coach_text.split(" ")
+        for i, word in enumerate(words):
+            chunk = word if i == 0 else " " + word
+            yield f"event: token\ndata: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+            await asyncio.sleep(0.03)
+
+    yield "event: done\ndata: [DONE]\n\n"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -132,7 +167,7 @@ templates = Jinja2Templates(directory=str(_HERE / "templates"))
 
 class StartSessionRequest(BaseModel):
     mode:             str  = Field("custom",   description="'custom' | 'deploy'")
-    alignment_enabled:    bool = Field(True,        description="Alignment Tracker 활성화 여부")
+    alignment_enabled:    bool = Field(False,       description="Alignment Tracker 활성화 여부")
     nutrition_goal:   str  = Field(...,         description="영양 목표 / Nutrition goal")
     meal_type:        str  = Field("meal",      description="식사 유형 / Meal type")
     meal_description: str  = Field("",          description="음식 이름 목록 / Food item names")
@@ -329,7 +364,6 @@ async def submit_turn_stream(session_id: str, req: TurnRequest):
     event: token  data: <text chunk>
     event: done   data: [DONE]
     """
-    import json as _json
     from fastapi.responses import StreamingResponse
 
     if _session_manager is None:
@@ -351,43 +385,12 @@ async def submit_turn_stream(session_id: str, req: TurnRequest):
         logger.exception(f"Error processing streamed turn for session {session_id}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Guardrail 차단 시 coach_question을 meta에 유지 (스트리밍하지 않음)
-    is_blocked = result.get("guardrail_blocked", False)
-    coach_text = "" if is_blocked else (result.pop("coach_question", "") or "")
-    assessment_text = None if is_blocked else result.pop("assessment_message", None)
-    coach_messages = [] if is_blocked else result.pop("coach_messages", [])
-
-    async def _sse_generator():
-        # 1) 메타데이터 이벤트 (모니터링 데이터 + 상태)
-        yield f"event: meta\ndata: {_json.dumps(result, ensure_ascii=False)}\n\n"
-        # 2) Multi-bubble: coach_messages 를 순차적으로 스트리밍
-        if len(coach_messages) > 1:
-            # 첫 번째 메시지 = assessment 피드백 (즉시 전송)
-            yield f"event: assessment\ndata: {_json.dumps(coach_messages[0], ensure_ascii=False)}\n\n"
-            # 나머지 메시지 = 후속 발화 (단어 단위 스트리밍)
-            for msg in coach_messages[1:]:
-                yield f"event: bubble_start\ndata: \"\"\n\n"
-                words = msg.split(" ")
-                for i, word in enumerate(words):
-                    chunk = word if i == 0 else " " + word
-                    yield f"event: token\ndata: {_json.dumps(chunk, ensure_ascii=False)}\n\n"
-                    await asyncio.sleep(0.03)
-        elif coach_text:
-            # 단일 말풍선: 기존 방식 유지 (하위 호환)
-            words = coach_text.split(" ")
-            for i, word in enumerate(words):
-                chunk = word if i == 0 else " " + word
-                yield f"event: token\ndata: {_json.dumps(chunk, ensure_ascii=False)}\n\n"
-                await asyncio.sleep(0.03)
-        # 3) 종료 신호
-        yield "event: done\ndata: [DONE]\n\n"
-
     logger.info(
         f"[Session {session_id[:8]}] Turn {result['turn_idx']} (stream) — "
         f"status={result['status']} aligned={result['alignment_aligned']}"
     )
     return StreamingResponse(
-        _sse_generator(),
+        _iter_turn_sse_events(result),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -101,7 +101,7 @@ class ScenarioResult:
 
 
 def _summarize_turn(r: Dict[str, Any]) -> Dict[str, Any]:
-    dec = r.get("orchestrator_decision") or {}
+    dec = r.get("dialogue_plan") or {}
     return {
         "turn_idx": r.get("turn_idx"),
         "phase":    r.get("phase"),

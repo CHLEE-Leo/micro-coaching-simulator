@@ -58,7 +58,14 @@ class LLMAgentService:
             self.client_pool[model_name] = load_model(model_name)
         return self.client_pool[model_name]
 
-    def run_module_inference(self, *, module: str, messages, mode: str) -> str:
+    def run_module_inference(
+        self,
+        *,
+        module: str,
+        messages,
+        mode: str,
+        response_schema: dict | None = None,
+    ) -> str:
         options = self.agent_config.generation_options(mode)
         return generate_response(
             self._client_for_module(module),
@@ -68,6 +75,7 @@ class LLMAgentService:
             stop_at_newline=options["stop_at_newline"],
             reasoning_effort=self.config.resolve_reasoning_effort(module),
             reasoning_summary=self.config.resolve_reasoning_summary(module),
+            response_schema=response_schema,
         )
 
     def generate_chat_replies(

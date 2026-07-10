@@ -43,7 +43,7 @@
 ### Run #1 — 2026-04-17 04:01 KST
 - 총 시나리오: 41 (assert 30 + observe-only 11)
 - 실행 시간: 약 19분 (scenarios) + 34초 (stress)
-- 모델 구성: orchestrator/info_seeker/recommender/response_generator/phase_predictor = `gpt-5.2` (heavy), alignment_estimator/certainty_estimator/context_tracker/guardrail/meal_tracker = `gpt-5.4-mini` (light)
+- 모델 구성: dialogue_planner/info_seeker/recommender/response_generator = `gpt-5.2` (heavy), alignment_estimator/certainty_estimator/context_tracker/guardrail/meal_tracker = `gpt-5.4-mini` (light)
 
 **결과:** `assert 29/30 통과 · observe-only 11 · stress OK`
 

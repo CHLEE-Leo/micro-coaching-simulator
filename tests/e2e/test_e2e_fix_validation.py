@@ -132,7 +132,7 @@ def test_v1_context_base_3_category():
         # context_base = cumulative context_base from session.history
         ctx_output = t.get("context_tracker_output", "") or ""
         ctx_cumul = t.get("context_base", "") or ""
-        action = (t.get("orchestrator_decision") or {}).get("action", "?")
+        action = (t.get("dialogue_plan") or {}).get("action", "?")
         print(f"  T{i+1}: action={action}, ctx_output_len={len(ctx_output)}, ctx_base_len={len(ctx_cumul)}")
         # Use whichever is available
         if ctx_output:
@@ -268,7 +268,7 @@ def test_v3_meal_tracker_accuracy():
         r.check("Session survived T1", False)
         cleanup(sid); return r
     mt1 = t1.get("meal_tracker_output", "") or t1.get("meal_base", "") or ""
-    action1 = (t1.get("orchestrator_decision") or {}).get("action", "?")
+    action1 = (t1.get("dialogue_plan") or {}).get("action", "?")
     print(f"  T1: action={action1}, mt_len={len(mt1)}")
 
     t2 = send_turn(sid, "White bread, regular ham, American cheese, some mustard. That's about it.")
@@ -276,7 +276,7 @@ def test_v3_meal_tracker_accuracy():
         r.check("Session survived T2", False)
         cleanup(sid); return r
     mt2 = t2.get("meal_tracker_output", "") or t2.get("meal_base", "") or ""
-    action2 = (t2.get("orchestrator_decision") or {}).get("action", "?")
+    action2 = (t2.get("dialogue_plan") or {}).get("action", "?")
     print(f"  T2: action={action2}, mt_len={len(mt2)}")
 
     t3 = send_turn(sid, "Not really sure about the amount. Maybe about two slices of bread and a few slices of ham.")
@@ -284,7 +284,7 @@ def test_v3_meal_tracker_accuracy():
         r.check("Session survived T3", False)
         cleanup(sid); return r
     mt3 = t3.get("meal_tracker_output", "") or t3.get("meal_base", "") or ""
-    action3 = (t3.get("orchestrator_decision") or {}).get("action", "?")
+    action3 = (t3.get("dialogue_plan") or {}).get("action", "?")
     print(f"  T3: action={action3}, mt_len={len(mt3)}")
 
     # Use the latest non-empty meal_base
@@ -370,7 +370,7 @@ def test_v4_context_base_cumulative_and_guard():
             break
         ctx_raw = t.get("context_tracker_output", "") or ""
         ctx_cum = t.get("context_base", "") or ""
-        action = (t.get("orchestrator_decision") or {}).get("action", "?")
+        action = (t.get("dialogue_plan") or {}).get("action", "?")
         print(f"  T{i+1}: action={action}, ctx_raw_len={len(ctx_raw)}, ctx_cum_len={len(ctx_cum)}")
         ctx_history.append(ctx_cum)  # use cumulative for checking
 
@@ -446,7 +446,7 @@ def test_v5_already_aligned_fast_exit():
             break
         status = t.get("status", "")
         align = t.get("alignment_score")
-        decision = t.get("orchestrator_decision") or {}
+        decision = t.get("dialogue_plan") or {}
         action = decision.get("action", "?")
         phase = t.get("phase", "")
         total_turns = i + 1

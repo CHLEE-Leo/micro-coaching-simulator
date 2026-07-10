@@ -40,6 +40,7 @@ def build_shared_history(
         history.update_meal_base(state.meal_base)
         history.update_tracker_state(state.tracker_state)
         history.update_context_base(state.context_base)
+        history.update_interaction_state(state.interaction_state)
 
     assistant_buffer: list[str] = []
     turns: list[tuple[str, str]] = []
